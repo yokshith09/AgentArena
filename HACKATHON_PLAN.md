@@ -4,6 +4,14 @@ Operating plan for the team. Milestones/focus: [PROJECT_ROADMAP.md](PROJECT_ROAD
 
 Last updated 2026-11-12. Deadline 2026-11-15. **Current Focus: M0 — contracts sign-off (X1), repo (X2), then parallel start of A1/A2/A3/B1/C1.**
 
+## 0. Teammates: start here (15 minutes)
+1. Clone: `git clone https://github.com/yokshith09/AgentArena.git` (needs collaborator access, OQ-09).
+2. Read in order: this file → [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §1–3 → your role's docs ([docs/README.md](docs/README.md)) → your tasks in [docs/14-task-board.md](docs/14-task-board.md).
+3. **Answer the open questions** in [docs/15-open-questions.md](docs/15-open-questions.md): fill the *Answer / Date / By* cells you know (blocking first: OQ-05, OQ-08, OQ-09, OQ-12, OQ-13). Unanswered ones fall back to their stated default.
+4. **Acknowledge the contracts (X1):** read [07](docs/07-data-schema.md), [08](docs/08-api-contracts.md), [10](docs/10-integration-contracts.md); add your name to the changelog in doc 10, or open a `contract/X1-...` PR with objections.
+5. Tell the team which role you take (OQ-04) and your hours for 12–15 Nov.
+Commit docs changes on a branch `docs/<topic>` and open a PR, or commit straight to `main` for answer cells only.
+
 ## 1. What we are building
 Agent → our proxy → Bifrost → LLM. Runner sandboxes the agent, grader decides success, Postgres stores runs/events, dashboard shows leaderboard, comparison, run traces, failure behaviour. Scope decision D-12: full plan, cut by the plan's cut line. Rubric unknown (OQ-01). Tavily is required (D-13). No guarantee of completion is made; load is high (see board).
 
