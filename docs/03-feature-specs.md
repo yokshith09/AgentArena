@@ -147,6 +147,7 @@ Model override in proxy (`model` rewritten per benchmark config); agent × model
 Record LLM responses keyed by request hash; replay mode serves them offline; Ollama option as offline baseline. Verification: T-26.
 
 ## F-16 Setup, docs, limitations, demo — P0 (minimum) — Owner C, all contribute — FR-20
+README must contain (rules, D-15): project description, problem solved, installation/quickstart, implementation overview, technologies and tools, **how AI is used and which AI tools were used**, how Bifrost (and Tavily if kept) contribute, limitations. Repo must be public at submission.
 `docker compose up` brings up DB, Bifrost, proxy, API, orchestrator, dashboard; README quickstart; "how to add your agent"; Limitations page (from plan loopholes' honest limits); final benchmark run; demo video; submission. **Never cut** (D-09). Verification: T-27 (fresh-clone walkthrough). DoD: AC-08, AC-09.
 
 ## F-17 Task generator & test-strength — P0 (Stage 8) — Owner A — FR-16

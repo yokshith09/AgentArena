@@ -39,5 +39,5 @@ V-01 → proxy events (T-01) → runner + Docker sandbox + grader (T-07…T-09) 
 ## 7. Watchpoints
 Daily: provider spend vs cap, hours of CP slip, count of `not run` P0 tests. Risks: TRD §9.
 
-## 8. Submission package (assumed; confirm OQ-03)
-Repo with README + docs, demo video, final data dump, Limitations page. PPT supplied separately ([PPT_FRAMEWORK.md](PPT_FRAMEWORK.md)).
+## 8. Submission package (rules, D-15)
+Window closes 15 Nov 2026 11:59 PM (timezone unstated; plan to submit the evening of 14 Nov). Package: **public** GitHub repo with detailed README (project, install, implementation, technologies, AI usage); project description; problem; demo video (~6 min); working demo (local is fine); submission form with the Bifrost benchmarking challenge as primary theme (tick the Tavily box only if Tavily stays in the project); pitch deck supplied separately ([PPT_FRAMEWORK.md](PPT_FRAMEWORK.md)); join the official Discord. Task X12 owns this.

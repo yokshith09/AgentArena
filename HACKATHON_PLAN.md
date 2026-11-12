@@ -13,7 +13,7 @@ Last updated 2026-11-12. Deadline 2026-11-15. **Current Focus: M0 — contracts 
 Commit docs changes on a branch `docs/<topic>` and open a PR, or commit straight to `main` for answer cells only.
 
 ## 1. What we are building
-Agent → our proxy → Bifrost → LLM. Runner sandboxes the agent, grader decides success, Postgres stores runs/events, dashboard shows leaderboard, comparison, run traces, failure behaviour. Scope decision D-12: full plan, cut by the plan's cut line. Rubric unknown (OQ-01). Tavily is required (D-13). No guarantee of completion is made; load is high (see board).
+Agent → our proxy → Bifrost → LLM. Runner sandboxes the agent, grader decides success, Postgres stores runs/events, dashboard shows leaderboard, comparison, run traces, failure behaviour. Scope decision D-12: full plan, cut by the plan's cut line. Official criteria known (D-15): Innovation, Technical execution, Problem/impact, Use of AI, UX, Scalability. Submission closes 15 Nov 11:59 PM (timezone unstated); repo must be public. Tavily kept in scope by team choice (D-13) although the rules make it optional. No guarantee of completion is made; load is high (see board).
 
 ## 2. Team allocation
 Three developers, assigned by component boundary so each can integrate independently (skills not used, per instruction; availability unknown, A-03). One accountable owner per task.

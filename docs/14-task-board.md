@@ -50,7 +50,8 @@
 | C10 | US-16 / F-16 | README quickstart, how-to-add-agent, Limitations text, demo acceptance walkthrough | Dev-C | P0 | X7 | L | AC-08, AC-09 met | T-27 | Planned |
 | X9 | US-16 / F-16 | Fresh-clone walkthrough on a clean machine/user + secrets scan | Dev-A | P0 | C10 | M | README steps work unmodified; no secrets in repo | T-27 | Planned |
 | X10 | US-16 / F-16 | Two demo rehearsals + video recording | Dev-C | P0 | X7, C10 | L | DA-01…DA-09 evidenced in `docs/evidence/` | Rehearsal checklist | Planned |
-| X11 | US-16 / - | Replace derived goals with official rubric in 13 when OQ-01 answered | Dev-C | P0 | OQ-01 | S | 13 rows map official criteria | Review | Planned (waiting for page 05 / rubric) |
+| X11 | US-16 / - | Map official judging criteria into 13 and roadmap (done 2026-11-12 from organizer text) | Dev-C | P0 | none | S | 13 has the official-criteria table | Review | Done |
+| X12 | US-16 / F-16 | Submission package: make repo public, README sections per F-16, AI-usage statement, project description, submission form (Bifrost benchmarking theme primary), join Discord, confirm deadline timezone | Dev-C | P0 | C10, X7 | M | Repo public; README has all rule-7 items; form fields drafted; timezone confirmed | Checklist vs rules 7 and the submission instructions | Planned |
 | A9 | US-15 / F-13 | Stage 11 model override + matrix API | Dev-A | P2 | A4, A5 | L | Matrix separates agent vs model effect | T-24 | Planned (gated) |
 | A10 | US-15 / F-12 | Stage 12 security score API | Dev-A | P2 | B10 | M | Per 08 §3.7 | T-23 | Planned (gated) |
 | B9 | US-15 / F-14 | Stage 13 `json_fields` grader + doc-analysis suite and remaining research tasks (~5 each; `answer_match` and first 2 research tasks are B13) | Dev-B | P2 | B3 | L | Suites pass validator | T-25, T-06 | Planned (gated) |
@@ -69,7 +70,7 @@
 | M2 | A5 (A), A6 (A), B5 (B), B6 (B), C5 (C), X4 (C), X5 (A), B12 (B) |
 | M3 | B4 (B), A13 (A), C7 (C), B8 (B), A7 (A), C8 (C), C14 (C), B13 (B), X6 (B) |
 | M4 | A8 (B), C9 (C), X7 (A), X8 (C) |
-| M5 | C10 (C), X9 (A), X10 (C), X11 (C) |
+| M5 | C10 (C), X9 (A), X10 (C), X11 (C), X12 (C) |
 | ST | A9 (A), A10 (A), B9 (B), B10 (B), C11 (C), C12 (C), A11 (A), C13 (C) |
 
 ## Planned load (hours, midpoint estimates)
@@ -81,9 +82,9 @@
 | M2 | 12.0 | 14.5 | 8.8 |
 | M3 | 12.5 | 14.0 | 11.0 |
 | M4 | 0.8 | 8.0 | 4.0 |
-| M5 | 2.0 | 0.0 | 9.8 |
-| **P0 total** | 42.5 | 44.0 | 44.5 |
-| **P0 + P1 total** | 42.5 | 52.0 | 46.5 |
+| M5 | 2.0 | 0.0 | 11.8 |
+| **P0 total** | 42.5 | 44.0 | 46.5 |
+| **P0 + P1 total** | 42.5 | 52.0 | 48.5 |
 | Stretch (P2/P3, gated) | 11.0 | 9.0 | 13.2 |
 
 Reading: available hours per developer are **unknown** (A-03). Day 1 (12 Nov, M0 + M1) plans 15.2 / 15.5 / 13.0 h for Dev-A / B / C. Three working days (12–14 Nov) at 8 h = 24 h each would be exceeded by the P0 totals above; the plan only holds with substantially longer days or by applying the cut rules ([12](12-delivery-plan.md) §4) early. This is a risk, not a guarantee.

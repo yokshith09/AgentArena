@@ -22,6 +22,7 @@
 ---
 
 ### OQ-01 · Official judging rubric
+> **UPDATE (D-15):** rules received. Criteria: Innovation, Technical execution, Problem and potential impact, Use of AI, User experience, Scalability and potential. No weights. This supersedes the draft answer below.
 - **Why it matters:** [13](13-traceability.md) and the demo order are built on *derived* goals G1–G8. Weights decide what we polish vs cut.
 - **Please provide:** criteria names, weights, any must-haves, any penalties; source (link/screenshot/text).
 - **Default:** keep G1–G8; equal weight.
@@ -38,6 +39,7 @@
 - **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-03 · Submission requirements and cutoff
+> **UPDATE (D-15):** submission window closes 15 Nov 2026 11:59 PM (timezone not stated). Required: public GitHub repo with detailed README (project, install, implementation, technologies), project description, problem, technologies, how AI is used, working demo/prototype, pitch deck (separate), demo video (about 6 min suggested). Self-host or local is fine; bring own keys. Still unknown: timezone, submission form specifics beyond the theme dropdown.
 - **Why:** sets the real deadline (we assume 14 Nov EOD with 15 Nov buffer) and the final deliverables.
 - **Please provide:** exact cutoff (date, time, timezone); what is submitted (repo link? video? deployed link? form?); video length/format limits; whether judges run the code or only watch.
 - **Default:** repo link + README + ≤ 5 min demo video; local-only demo.
@@ -141,6 +143,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 - **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-11 · Demo hosting
+> **UPDATE (D-15):** organizers confirm a deployed app is not mandatory; local with a clear README and demo video is fine.
 - **Why:** hosted demo adds deployment work not in the board.
 - **Please decide:** local laptop demo only, or must judges open a URL?
 - **Default:** local only + demo video + data dump.

@@ -49,8 +49,9 @@ Legend — **D** Approved (stated in the team's plan or by the user) · **P** Pr
 | D-09 | Cut line: Stages 0–8 must; 10 and 9 strongly recommended; 11–13 differentiators; 14 polish; **15 never skipped** | Plan §5 |
 | D-10 | Honest limits are published on a Limitations page | Plan Stage 15 |
 | D-12 | **Full plan scope kept** (user decision 2026-11-11): Stages 0-8, 10, 15 = P0; Stage 9 = P1; Stages 11-13 = P2; Stage 14 = P3. Parallelised over 3 developers; no up-front scope compression | User message |
-| D-13 | **Tavily is required** (user, 2026-11-12): a Tavily search tool is wired into a reference research agent as P0 (tasks C14, B13). Remaining unknowns: key, budget, exact integration expectation → OQ-13, OQ-14 | User message |
+| D-13 | **Tavily kept in scope by team decision** (user, 2026-11-12); NOTE organizer text (D-15) says Bifrost-only submissions are valid and Tavily is an optional add-on (merged project, optional checkbox) — so it is a scoring/prize choice, not a hard requirement; revisit if time slips: a Tavily search tool is wired into a reference research agent as P0 (tasks C14, B13). Remaining unknowns: key, budget, exact integration expectation → OQ-13, OQ-14 | User message |
 | D-14 | Tooling decided (OQ-10/11/07): Vite + TypeScript, plain CSS, no chart library; local demo + video + data dump; tool faults via env var in shared tools module | Team answers 2026-11-12 |
+| D-15 | Hackathon rules received 2026-11-12 (organizer text): judging criteria = Innovation, Technical execution, Problem/impact, Use of AI, User experience, Scalability/potential; submission = **public GitHub repo with detailed README** (project, install steps, implementation, technologies), project description, problem, technologies, how AI is used, working demo, pitch deck (separate), demo video (~6 min suggested, no hard limit); self-hosting or local run is fine, bring own API keys; deployed app not mandatory; submission window closes **15 Nov 2026 11:59 PM** (timezone not stated); judging 29 Nov 7-11:59 PM; one submission per team; join the official Discord; disclose AI tool usage | Organizer text |
 | D-11 | PPT framework is supplied separately; this pack contains only a placeholder | User message |
 
 ### 3.2 Proposals (P) — need sign-off at CP0 (2026-11-11 EOD)
@@ -92,9 +93,9 @@ Legend — **D** Approved (stated in the team's plan or by the user) · **P** Pr
 
 | ID | Question | Owner | Needed by | Impact |
 |---|---|---|---|---|
-| OQ-01 | What is the official judging rubric (criteria + weights)? | Team lead | CP0 | Re-map [13](13-traceability.md) rows |
+| OQ-01 | ~~Official rubric?~~ **Answered (D-15):** six criteria, no weights. Mapped in [13](13-traceability.md) and the roadmap | — | — | done |
 | OQ-02 | ~~Is Tavily required?~~ **Resolved 2026-11-12: yes (D-13).** Follow-ups in OQ-13/OQ-14 | — | — | Tavily tool is P0 |
-| OQ-03 | Submission format, cutoff time on 15 Nov, demo-video length/limits? | Team lead | CP0 | Delivery buffer, F-16 |
+| OQ-03 | ~~Submission format/cutoff?~~ **Mostly answered (D-15):** 15 Nov 11:59 PM, timezone unstated (assume IST, plan to submit by evening of 14 Nov); repo must be public | Dev-C | M0 | confirm timezone on portal/Discord |
 | OQ-04 | Name of the third team member; confirm Dev-A/B/C assignment | Team | CP0 | [11](11-team-execution-plan.md) owners |
 | OQ-05 | Which provider/model and what dollar budget for all benchmark runs (spend cap defaults)? | Dev-A | CP0 | `pricing.yaml`, `n_runs`, task count |
 | OQ-06 | Bifrost verification results V-01…V-06 (see [04](04-trd-architecture.md) §6) | Dev-A | CP0 | Log reconciliation (P1/P2) feasibility |
