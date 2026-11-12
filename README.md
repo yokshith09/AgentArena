@@ -2,7 +2,7 @@
 
 Benchmarking platform for AI agents (Global AI Hackathon · Problem Statement 02 · Bifrost by Maxim AI). Runs any agent as a black box on identical tasks through a measuring proxy, records success / steps / tool calls / tokens / cost / time, repeats runs for statistics, injects controlled failures, and shows comparisons with step-by-step traces.
 
-**Status:** implementation is underway. The foundation includes the database schema and fixtures, Docker Compose configuration, contract schemas, and scripted `mock_llm`; the frontend has not been scaffolded yet.
+**Status:** implementation is underway. The foundation includes the database schema and fixtures, Docker Compose configuration, contract schemas, and scripted `mock_llm`. A React/Vite dashboard scaffold is in `frontend/`, and the framework-free Agent A is under implementation in `agents/agent_a/`.
 
 ## Documentation
 - Start here: [HACKATHON_PLAN.md](HACKATHON_PLAN.md) · [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) · [Task board](docs/14-task-board.md) · [DEV-A task tracker](docs/DEV-A-TASK-TRACKER.md) · full index: [docs/README.md](docs/README.md)
