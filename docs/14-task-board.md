@@ -1,7 +1,7 @@
 # 14 · Task Board
 
-> Status: Draft, generated from one task list on 2026-11-12. **Authoritative for task IDs, owners, estimates, acceptance, status.** Milestones/timeboxes: [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md). Contracts referenced: [07](07-data-schema.md), [08](08-api-contracts.md), [10](10-integration-contracts.md); tests T-xx in [09](09-testing-and-demo.md).
-> Statuses: **Planned · In progress · Blocked · Done**. Nothing is Done: the repo does not exist yet. Update status in place; one accountable owner per task (reviewers: [11](11-team-execution-plan.md) §3).
+> Status: Draft, generated from one task list on 2026-11-12. Foundation work is present; task statuses below are authoritative. **Authoritative for task IDs, owners, estimates, acceptance, status.** Milestones/timeboxes: [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md). Contracts referenced: [07](07-data-schema.md), [08](08-api-contracts.md), [10](10-integration-contracts.md); tests T-xx in [09](09-testing-and-demo.md).
+> Statuses: **Planned · In progress · Blocked · Done**. X2 and A3 are marked Done; update task status in place as work is verified. One accountable owner per task (reviewers: [11](11-team-execution-plan.md) §3).
 
 **Estimate scale:** S ≤ 1 h · M 1–3 h · L 3–6 h · XL 6–10 h of focused work. Load maths uses midpoints S 0.75, M 2, L 4.5, XL 8 h. These are planning guesses, not measurements; re-estimate at each checkpoint.
 

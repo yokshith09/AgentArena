@@ -1,6 +1,6 @@
 # PROJECT_ROADMAP · AgentArena
 
-Status: Draft v1 · Last updated 2026-11-12 · Deadline 2026-11-15 · Team 3 (Dev-A, Dev-B, Dev-C; names open, OQ-04). Planning only; no code exists. This plan does not guarantee success: planned P0 load (≈ 42 h per developer, midpoint estimates) is high against three working days — see [docs/14-task-board.md](docs/14-task-board.md) load table and the cut rules.
+Status: Draft v1 · Last updated 2026-11-12 · Deadline 2026-11-15 · Team 3 (Dev-A, Dev-B, Dev-C; names open, OQ-04). Planning and foundation implementation are underway. This plan does not guarantee success: planned P0 load (≈ 42 h per developer, midpoint estimates) is high against three working days — see [docs/14-task-board.md](docs/14-task-board.md) load table and the cut rules.
 
 Authority: tasks/owners/status → [docs/14-task-board.md](docs/14-task-board.md) · contracts → docs 07/08/10 · decisions → [docs/01](docs/01-hackathon-strategy.md) · team operating rules, dependency graph, risks → [HACKATHON_PLAN.md](HACKATHON_PLAN.md).
 
@@ -19,10 +19,10 @@ Nothing else starts until its contract (X1) exists. Only one milestone is active
 
 | Class | Items |
 |---|---|
-| Implemented | **None.** Repo is not a git repository; no source, compose, DB, or tests exist. (A hidden `.anchor/` folder is present in the workspace; its origin is not known to this plan and it is ignored.) |
-| In progress | Documentation pack (docs 01–14, README, this roadmap): drafted, **not signed off** (X1). |
+| Implemented | **X2** repository bootstrap and skeleton; **A3** scripted `mock_llm` (standalone integration check passes). Contract schemas, DB migration/fixtures, compose config, and smoke/check scripts are present. |
+| In progress | **X1** contracts 07/08/10 drafted, unsigned; **A12** compose config present but services not started; **A2** migration/fixtures present but DB check not run. |
 | Planned | All tasks in the [board](docs/14-task-board.md) except those below. |
-| Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · none of the items depend on the rubric any more · C14 needs a Tavily key (OQ-13). |
+| Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · C14 needs a Tavily key (OQ-13). No P0 implementation task should start until X1 is signed off. |
 | Unknown | Whether any work from 1–11 Nov exists outside this folder (OQ-12). If it does, re-audit before M0. |
 
 ## 3. Milestones

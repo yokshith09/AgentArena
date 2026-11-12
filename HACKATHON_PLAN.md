@@ -108,4 +108,4 @@ Out of scope. [docs/PPT_FRAMEWORK.md](docs/PPT_FRAMEWORK.md) remains an untouche
 | Date | Gate | Note |
 |---|---|---|
 | 2026-11-11 | — | Documentation pack drafted; nothing implemented |
-| 2026-11-12 | pre-CP0 | Roadmap, board, SDLC rules added; repo not created; X1 sign-off pending |
+| 2026-11-12 | post-bootstrap | Repository and foundation files committed (`7bb2440`); X2 complete; A3 mock check passes; X1 sign-off pending |
