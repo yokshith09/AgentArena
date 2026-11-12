@@ -1,0 +1,9 @@
+{
+  "name": "agent-a-plain",
+  "mode": "command",
+  "entrypoint": "python agent.py",
+  "model_config": {
+    "model": "mock-model"
+  },
+  "description": "Minimal loop"
+}

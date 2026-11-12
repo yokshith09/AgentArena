@@ -1,0 +1,25 @@
+{
+  "task_id": "fix-off-by-one",
+  "category": "coding",
+  "prompt": "Fix the bug",
+  "workspace": "workspace",
+  "grader": {
+    "type": "pytest",
+    "config": {
+      "visible_tests": [
+        "tests/"
+      ],
+      "hidden_tests": [
+        "hidden_tests/"
+      ],
+      "protected_files": [
+        "tests/"
+      ],
+      "timeout_s": 120
+    }
+  },
+  "reference_solution": "reference_solution",
+  "faults_allowed": [
+    "provider_503_outage"
+  ]
+}

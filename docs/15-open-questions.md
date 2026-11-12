@@ -3,6 +3,61 @@
 > Status: 2026-11-12, answers merged from the former `15-open-questions-answered.md` (drafted from the problem-sheet pages 01-04, Bifrost and Tavily docs; **not verified by running anything**). **This file is where answers are recorded.** One-line register stays in [01](01-hackathon-strategy.md) §3.4 and points here. Answering: edit the **Answer / Date / By** cells (PR or direct commit to `main` is fine, label `docs`). If nobody answers by the deadline, the **Default** applies automatically and is noted as "defaulted".
 > Priority: **Blocking** = work cannot start/finish without it · **Shapes** = changes design/scope · **Minor**.
 
+## START HERE: questions still open, in plain words
+
+Seven things only **people** can answer. For each one: what we need, why, exactly how to find out, and the format to reply in. Reply by editing this file (fill the **YOUR ANSWER** line) and pushing, or send it in the team chat and Yokshith pastes it here. If you do nothing, the **If no answer** line applies.
+
+### Q1 · LLM provider, model, key, budget (OQ-05) — blocks Bifrost setup (A1) and all real runs
+- **We need:** (a) which provider (OpenAI / Anthropic / Gemini / other) and **one cheap model**; (b) **who holds the API key**; (c) the price per 1 million input tokens and per 1 million output tokens, copied from the provider's pricing page; (d) the most money we may spend in total, in USD.
+- **Why:** the key goes into Bifrost; the price goes into `pricing.yaml` so cost is calculated; the budget sets the spend cap.
+- **How to find out:** open the provider's pricing page, find the model's row, copy the two numbers and today's date.
+- **Reply format:** `provider=__ model=provider/model-name key_holder=__ input_usd_per_1m=__ output_usd_per_1m=__ budget_usd=__`
+- **If no answer:** we build and test only with `mock_llm` (fake LLM); real benchmark runs cannot start.
+- **YOUR ANSWER:** _____
+
+### Q2 · Does Docker work on your machine? (OQ-08) — blocks the hardened sandbox (B4) and `docker compose up`
+- **We need:** the output of three commands from **each** of the 3 developers: 
+  `docker --version`, then `docker run --rm hello-world`, then `docker compose version`. Also: Windows/Mac/Linux, free RAM (GB), and whether Docker Desktop is **running** (started) right now.
+- **Why:** Postgres, Bifrost and the sandbox all run in Docker.
+- **Known so far:** on Yokshith's machine Docker 29.8.1 and Compose v5.5.1 are installed but the Docker engine was **not running** when checked (2026-11-12). Start Docker Desktop first.
+- **Reply format:** `name=__ os=__ ram_gb=__ docker_ok=yes/no hello_world=pass/fail`
+- **If no answer:** assume yes; a machine that fails uses the plain-subprocess fallback.
+- **YOUR ANSWER (Akhil):** _____  **(third member):** _____  **(Yokshith):** _____
+
+### Q3 · Can everyone push to the GitHub repo? (OQ-09) — blocks teamwork on `main`
+- **We need:** Akhil and the third member accept the invitation to `yokshith09/AgentArena` (Yokshith: Settings → Collaborators → Add people, role Write). Then each person runs `git clone https://github.com/yokshith09/AgentArena.git`, creates a branch `docs/test-<yourname>`, pushes it.
+- **Reply format:** `name=__ push_test=pass/fail`
+- **If no answer:** work happens through Yokshith only, which slows everything.
+- **YOUR ANSWER:** _____
+
+### Q4 · Who is the third member and when can each person work? (OQ-04)
+- **We need:** the third member's name and GitHub username; for each of 12, 13, 14, 15 Nov: hours available and any time you are unreachable; timezone.
+- **Why:** the plan carries about 42–46 hours of work per person; if hours are lower we cut scope earlier.
+- **Reply format:** `name=__ github=__ tz=__ 12Nov=__h 13Nov=__h 14Nov=__h 15Nov=__h`
+- **If no answer:** assumed full-time (≈ 12 h/day), which the plan already flags as risky.
+- **YOUR ANSWER (Akhil):** _____  **(third member):** _____  **(Yokshith):** _____
+
+### Q5 · What is the hidden `.anchor/` folder, and does any earlier work exist? (OQ-12)
+- **We need:** one yes/no and one sentence: did anyone write code, notebooks, or create accounts (Bifrost, Tavily, provider) between 1 and 11 Nov? If so, where is it? Is `.anchor/` yours?
+- **Known so far:** `.anchor/` is in Yokshith's local folder, is not in the repo (ignored), and is probably a tool's memory folder.
+- **If no answer:** we treat everything as starting from zero.
+- **YOUR ANSWER:** _____
+
+### Q6 · Tavily account and key (OQ-13) — blocks the research agent (C14)
+- **We need:** one person creates a free Tavily account (no card needed, 1,000 credits/month) at tavily.com, creates an API key, and shares it privately (never in git).
+- **Reply format:** `tavily_key_holder=__ account_created=yes/no`
+- **If no answer:** C14 runs on a stub response only; real Tavily runs wait.
+- **YOUR ANSWER:** _____
+
+### Q7 · Hackathon portal facts (OQ-03) — two quick lookups
+- **We need:** (a) in which **timezone** is "15 Nov 2026, 11:59 PM"? (check the portal or ask on Discord); (b) has everyone joined the official Discord (link in the rules)? (c) what exactly is in the submission form (fields, upload limits)?
+- **If no answer:** we plan to submit by the evening of 14 Nov IST.
+- **YOUR ANSWER:** _____
+
+> Everything below is the full reference version of each question (options, defaults, drafted answers). Only Q1–Q7 above still need a person.
+
+---
+
 | # | Pri | Needed by | Question owner → answerer |
 |---|---|---|---|
 | OQ-01 | Shapes | M0 gate (12 Nov midday) | Dev-C → team lead / whoever has the problem sheet |

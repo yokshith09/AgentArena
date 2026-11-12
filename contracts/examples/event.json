@@ -1,0 +1,16 @@
+{
+  "id": 3,
+  "run_id": "22222222-2222-4222-8222-222222222222",
+  "ts": "2026-01-01T00:00:08Z",
+  "type": "llm_call",
+  "agent_role": null,
+  "payload": {
+    "status_code": 200,
+    "tokens_in": 400,
+    "tokens_out": 90,
+    "cost": 0.0012,
+    "cost_confidence": "verified"
+  },
+  "latency": 2100,
+  "error": null
+}

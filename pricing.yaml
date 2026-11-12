@@ -1,0 +1,12 @@
+# Versioned token prices (07 section 8). Values are NOT filled: copy from the provider pricing page (OQ-05, V-06).
+version: "2026-11-12"
+currency: USD
+models:
+  "mock-model":                 # used with mock_llm only
+    effective_from: "2026-11-01"
+    input_per_1m_tokens: 0.0
+    output_per_1m_tokens: 0.0
+  # "openai/gpt-4o-mini":
+  #   effective_from: "YYYY-MM-DD"
+  #   input_per_1m_tokens: ?
+  #   output_per_1m_tokens: ?

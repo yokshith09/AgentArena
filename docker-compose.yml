@@ -1,0 +1,32 @@
+# Stage 0-1 services only. proxy/api/orchestrator/frontend are added by their owners as they land.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-arena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arena}
+      POSTGRES_DB: ${POSTGRES_DB:-arena}
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro   # runs *.sql on first start only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arena}"]
+      interval: 5s
+      retries: 10
+
+  bifrost:
+    image: maximhq/bifrost   # pin a version tag once smoke test (A1) passes
+    ports: ["${BIFROST_PORT:-8080}:8080"]
+    volumes: ["./data/bifrost:/app/data"]   # provider key is added in the UI at http://localhost:8080
+
+  mock_llm:
+    image: python:3.12-alpine
+    profiles: ["mock"]
+    command: python /app/server.py
+    environment: { MOCK_PORT: "9000" }
+    ports: ["${MOCK_LLM_PORT:-9000}:9000"]
+    volumes: ["./mock_llm:/app:ro"]
+
+volumes:
+  pgdata:

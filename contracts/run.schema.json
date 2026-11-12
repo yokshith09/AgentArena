@@ -1,0 +1,145 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "run_id",
+    "agent_id",
+    "task_id",
+    "scenario",
+    "state"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "scenario": {
+      "type": "string"
+    },
+    "model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INFRA_ERROR",
+        null
+      ]
+    },
+    "passed": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "tokens_in": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "tokens_out": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "cost": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "cost_confidence": {
+      "enum": [
+        "verified",
+        "estimated",
+        null
+      ]
+    },
+    "duration": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "steps": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "tool_calls": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "env_fingerprint": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "benchmark_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "repeat_index": {
+      "type": "integer"
+    },
+    "attempt": {
+      "type": "integer"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "done"
+      ]
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "finished_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "grader_result": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "workspace_diff": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Run"
+}

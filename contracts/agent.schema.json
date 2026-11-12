@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "name",
+    "mode",
+    "entrypoint"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "command",
+        "http",
+        "docker"
+      ]
+    },
+    "entrypoint": {
+      "type": "string"
+    },
+    "model_config": {
+      "type": "object"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent"
+}

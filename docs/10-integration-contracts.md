@@ -77,7 +77,7 @@ Exit codes (CLI): 0 = graded (pass or fail), 2 = grader infrastructure failure (
 4. Proxy never updates `runs`; orchestrator never writes `llm_call` events.
 
 ### 2.6 `mock_llm` (A)
-HTTP server answering `POST /v1/chat/completions` (and the proxy-shaped `POST /runs/{run_id}/v1/chat/completions` for agent development before the proxy exists). Behaviour driven by a JSON script file: ordered list of responses, each either `{text}` or `{tool_calls:[{name, arguments}]}`, always with a `usage` block; optional `fail_next: {n, status}` to emulate upstream errors; supports `stream=true`. Proxy reads upstream base URL from `UPSTREAM_BASE_URL` [P]. Script format finalised by A at CP0 and added to this section.
+HTTP server answering `POST /v1/chat/completions` (and the proxy-shaped `POST /runs/{run_id}/v1/chat/completions` for agent development before the proxy exists). Behaviour driven by a JSON script file: ordered list of responses, each either `{text}` or `{tool_calls:[{name, arguments}]}`, always with a `usage` block; optional `fail_next: {n, status}` to emulate upstream errors; supports `stream=true`. Proxy reads upstream base URL from `UPSTREAM_BASE_URL` [P]. Script format (implemented): see the docstring of `mock_llm/server.py`; admin endpoint `POST /_admin/fail {"n","status"}`.
 
 ## 3. Shared types & conventions
 
