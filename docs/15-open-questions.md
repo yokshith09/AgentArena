@@ -174,6 +174,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 - **Date / By:** 2026-11-12 / draft (from docs), account creation pending
 
 ### OQ-14 · What exactly does "Integrate Bifrost + Tavily" require? (new)
+> **UPDATE (D-15):** organizers say a project may use Bifrost, Tavily, or both; a merged project picks the Bifrost challenge as primary and ticks the optional Tavily box, and the deck must show how each contributes. Tavily is optional for this theme; D-13 keeps it in scope as a team choice.
 - **Why:** we assume Tavily is used as a search tool by an agent (C14) and judges look for it in the trace. The problem sheet may mean something different (e.g. Tavily inside the platform, or inside every research task).
 - **Please quote** the sentence(s) from the problem statement/rules about Tavily and Bifrost, and say whether Tavily must be visible: in the architecture, in the dashboard, or only in one agent.
 - **Default:** one research agent with Tavily search tool + 2 research tasks + visible in trace (DA-12).
