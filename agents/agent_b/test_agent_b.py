@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import subprocess
@@ -8,11 +9,23 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from agents.agent_a.agent import ToolError, _workspace_file, run_tests
 from mock_llm import server
 
+agent_spec = importlib.util.spec_from_file_location(
+    "agent_b_under_test",
+    Path(__file__).with_name("agent.py"),
+)
+if agent_spec is None or agent_spec.loader is None:
+    raise ImportError("could not load Agent B source for tests")
+agent_module = importlib.util.module_from_spec(agent_spec)
+sys.modules[agent_spec.name] = agent_module
+agent_spec.loader.exec_module(agent_module)
+ToolError = agent_module.ToolError
+_run_tests = agent_module._run_tests
+_workspace_file = agent_module._workspace_file
 
-class AgentATests(unittest.TestCase):
+
+class AgentBTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary_directory = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary_directory.name)
@@ -30,6 +43,14 @@ class AgentATests(unittest.TestCase):
         script = self.root / "mock-script.json"
         script.write_text(json.dumps({
             "responses": [
+                {
+                    "tool_calls": [
+                        {
+                            "name": "read_file",
+                            "arguments": json.dumps({"path": "solution.py"}),
+                        },
+                    ],
+                },
                 {
                     "tool_calls": [
                         {
@@ -57,9 +78,9 @@ class AgentATests(unittest.TestCase):
             "WORKSPACE": str(self.workspace),
             "OPENAI_BASE_URL": (
                 f"http://127.0.0.1:{self.mock_server.server_address[1]}"
-                "/runs/00000000-0000-4000-8000-000000000001/v1"
+                "/runs/00000000-0000-4000-8000-000000000002/v1"
             ),
-            "RUN_ID": "00000000-0000-4000-8000-000000000001",
+            "RUN_ID": "00000000-0000-4000-8000-000000000002",
             "OPENAI_API_KEY": "test-key",
             "ARENA_MODEL": "mock-model",
         })
@@ -71,7 +92,7 @@ class AgentATests(unittest.TestCase):
         self.mock_script_patch.stop()
         self.temporary_directory.cleanup()
 
-    def test_scripted_task_completes_through_mock_llm(self) -> None:
+    def test_framework_agent_completes_through_mock_llm(self) -> None:
         agent_path = Path(__file__).with_name("agent.py")
         result = subprocess.run(
             [sys.executable, str(agent_path)],
@@ -79,23 +100,42 @@ class AgentATests(unittest.TestCase):
             env=self.environment,
             capture_output=True,
             text=True,
-            timeout=15,
+            timeout=30,
             check=False,
         )
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Completed the task", result.stdout)
-        self.assertEqual(server.STATE["i"], 3)
+        self.assertEqual(server.STATE["i"], 4)
         self.assertIn("return 42", (self.workspace / "solution.py").read_text(encoding="utf-8"))
 
+    def test_upstream_error_is_reported_without_sdk_retries(self) -> None:
+        server.STATE["fail"] = {"n": 1, "status": 503}
+        agent_path = Path(__file__).with_name("agent.py")
+        result = subprocess.run(
+            [sys.executable, str(agent_path)],
+            cwd=agent_path.parent,
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Agent B error:", result.stderr)
+        self.assertIn("503", result.stderr)
+        self.assertEqual(server.STATE["fail"]["n"], 0)
+        self.assertEqual(server.STATE["i"], 0)
+
     def test_run_tests_executes_pytest_in_the_workspace(self) -> None:
-        result = run_tests(self.workspace)
+        result = _run_tests(self.workspace)
 
         self.assertTrue(result["ok"], result)
         self.assertEqual(result["exit_code"], 0)
         self.assertIn("1 passed", result["stdout"])
 
-    def test_workspace_file_resolution_rejects_parent_paths(self) -> None:
+    def test_workspace_file_resolution_rejects_paths_outside_workspace(self) -> None:
         for path in ("../outside.txt", str(self.root / "outside.txt"), "bad\x00path"):
             with self.subTest(path=path), self.assertRaises(ToolError):
                 _workspace_file(self.workspace, path)
