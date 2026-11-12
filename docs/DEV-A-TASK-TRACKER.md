@@ -20,7 +20,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | Order | ID | Task | Priority / milestone | Dependencies | Status |
 |---:|---|---|---|---|---|
 | 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — approved and pushed on DEV-A; awaiting merge to main |
-| 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts and P-02…P-17; Dev-B/Dev-C acknowledgement, open questions, and fixture-list agreement remain |
+| 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts/P-02…P-17 and confirms canonical fixtures; Dev-B/Dev-C acknowledgement and open questions remain |
 | 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | Planned |
 | 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | Planned |
 | 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Planned |
@@ -253,4 +253,4 @@ The order above is the practical dependency order, not permission to bypass the 
 |---|---|
 | 2026-11-12 | Created from the repository documentation pack; verified Git/bootstrap facts and captured DEV-A task sequence and initial status. |
 | 2026-11-12 | Implemented and verified X2; approved by DEV-A and pushed as commit `1c84fe3`; awaiting merge to main. |
-| 2026-11-12 | DEV-A reviewed docs 07/08/10 and accepted current drafts and proposals P-02…P-17; X1 remains open for other owners and team-only answers. |
+| 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
