@@ -67,7 +67,7 @@ Run on the demo machine from a clean state with the **final benchmark data** loa
 | DA-08 | Limitations page | honest limits listed | screenshot | AC-09 |
 | DA-09 | Cost transparency | run shows cost + verified/estimated label | screenshot | FR-02 |
 | DA-10 (P1) | Register an agent + doctor | one command; doctor output for broken manifest | clip | FR-13 |
-| DA-12 | Tavily integration | research agent run shows Tavily `tool_call` events in trace and passes its research task | screenshot | D-13 |
+| DA-12 | Tavily integration | research agent run shows Tavily `tool_call` events in trace, passes its research task; Tavily appears in README/architecture and the category filter | screenshot | D-13 |
 | DA-11 (P2) | Security | injection task flags obedient agent only | screenshot | FR-14 |
 
 Rehearsal: full run-through at CP4 (target ≤ 5 min), once more after any hotfix.

@@ -30,7 +30,7 @@ Status: **Draft for CP0 sign-off (2026-11-11).** Documentation only — no code 
 | 12 | [Delivery plan](12-delivery-plan.md) | Schedule, scope-cut rules, deployment, demo-critical path |
 | 13 | [Traceability](13-traceability.md) | Criterion → requirement → feature → owner → test → evidence |
 | 14 | [Task board](14-task-board.md) | Task IDs, owners, estimates, acceptance, tests, status |
-| 15 | [Open questions](15-open-questions.md) | Expanded OQs with options, defaults, answer cells |
+| 15 | [Open questions](15-open-questions.md) | Expanded OQs with options, defaults and recorded answers |
 | — | [PROJECT_ROADMAP](../PROJECT_ROADMAP.md) | Current focus, audit, milestones, criteria map |
 | — | [HACKATHON_PLAN](../HACKATHON_PLAN.md) | Allocation, dependency graph, SDLC rules, risks, cuts |
 | — | [PPT framework](PPT_FRAMEWORK.md) | Placeholder, supplied separately |

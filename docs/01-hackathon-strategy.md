@@ -50,6 +50,7 @@ Legend — **D** Approved (stated in the team's plan or by the user) · **P** Pr
 | D-10 | Honest limits are published on a Limitations page | Plan Stage 15 |
 | D-12 | **Full plan scope kept** (user decision 2026-11-11): Stages 0-8, 10, 15 = P0; Stage 9 = P1; Stages 11-13 = P2; Stage 14 = P3. Parallelised over 3 developers; no up-front scope compression | User message |
 | D-13 | **Tavily is required** (user, 2026-11-12): a Tavily search tool is wired into a reference research agent as P0 (tasks C14, B13). Remaining unknowns: key, budget, exact integration expectation → OQ-13, OQ-14 | User message |
+| D-14 | Tooling decided (OQ-10/11/07): Vite + TypeScript, plain CSS, no chart library; local demo + video + data dump; tool faults via env var in shared tools module | Team answers 2026-11-12 |
 | D-11 | PPT framework is supplied separately; this pack contains only a placeholder | User message |
 
 ### 3.2 Proposals (P) — need sign-off at CP0 (2026-11-11 EOD)
@@ -97,7 +98,7 @@ Legend — **D** Approved (stated in the team's plan or by the user) · **P** Pr
 | OQ-04 | Name of the third team member; confirm Dev-A/B/C assignment | Team | CP0 | [11](11-team-execution-plan.md) owners |
 | OQ-05 | Which provider/model and what dollar budget for all benchmark runs (spend cap defaults)? | Dev-A | CP0 | `pricing.yaml`, `n_runs`, task count |
 | OQ-06 | Bifrost verification results V-01…V-06 (see [04](04-trd-architecture.md) §6) | Dev-A | CP0 | Log reconciliation (P1/P2) feasibility |
-| OQ-07 | Is the tool-fault mechanism in P-08 acceptable, or is a runner-side PATH shim preferred? | Dev-B | CP0 | F-10 |
+| OQ-07 | **Answered: option (a), P-08 stands.** Is the tool-fault mechanism in P-08 acceptable, or is a runner-side PATH shim preferred? | Dev-B | CP0 | F-10 |
 | OQ-08 | Is Docker Desktop available on every dev/demo machine (needed for compose and the Stage 4 hardened sandbox)? | Team | CP0 | F-03, deployment |
 | OQ-09 | `git init` + remote location and branch policy? | Team | CP0 | [11](11-team-execution-plan.md) §5 |
 | OQ-10 | Chart library / bundler preferences for dashboard | Dev-C | 12 Nov | UI effort |
@@ -106,4 +107,4 @@ Legend — **D** Approved (stated in the team's plan or by the user) · **P** Pr
 | OQ-13 | Tavily account/key/quota and how it is shared | Dev-C | M1 | C14 |
 | OQ-14 | What exactly does the problem sheet require for "Bifrost + Tavily"? | Dev-C | M1 | DA-12, scope of C14 |
 
-Full wording, options and defaults for every OQ, and the place to record answers: [15 Open questions](15-open-questions.md). Answers are never recorded only in chat.
+Full wording, options, defaults and **answers** for every OQ: [15 Open questions](15-open-questions.md). Status 2026-11-12: answered (draft from docs): OQ-01 (no rubric in pages 01-04; use the 5 mandatory requirements; page 05 missing), OQ-03 (partly), OQ-04, OQ-06 (smoke test pending), OQ-07 (option a), OQ-10, OQ-11, OQ-13, OQ-14. Still need the team: OQ-05, OQ-08, OQ-09, OQ-12, availability, page 05. Answers are never recorded only in chat.

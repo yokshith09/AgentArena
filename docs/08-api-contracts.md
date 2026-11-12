@@ -30,7 +30,7 @@ List endpoints: `?limit` (default 50, max 200), `?offset` (default 0). Response 
 | GET | `/health` | `{ "status": "ok" }` |
 
 - `run_id` must be an existing `runs.run_id` with `state='running'` [P-02].
-- Optional request header `X-Agent-Role: <string>` → stored as `events.agent_role`.
+- The proxy also forwards `x-bf-lh-run_id: {run_id}` to Bifrost so Bifrost's own logs carry the run ID (Bifrost stores any `x-bf-lh-*` header; OQ-06 V-03, to be confirmed by smoke test). Optional request header `X-Agent-Role: <string>` → stored as `events.agent_role`.
 - Request/response bodies are forwarded as-is to Bifrost, except: (a) `stream_options.include_usage=true` is added for streaming requests if absent (A-02); (b) P2 model override rewrites `model`.
 - Proxy-generated errors use OpenAI error shape:
 
