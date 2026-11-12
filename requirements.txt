@@ -1,0 +1,6 @@
+# Shared application dependencies; versions verified from PyPI on 2026-11-12.
+fastapi==0.162.5
+httpx==0.28.1
+psycopg[binary]==3.3.8
+PyYAML==6.0.3
+uvicorn[standard]==0.54.0

@@ -19,7 +19,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 
 | Order | ID | Task | Priority / milestone | Dependencies | Status |
 |---:|---|---|---|---|---|
-| 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — Git repo, `main`, clean worktree, and `.env` ignore verified; source skeleton, `.env.example`, and dependency manifests remain |
+| 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — implementation and checks complete locally; awaiting DEV-A review before integration |
 | 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — draft docs exist; three-owner acknowledgement and contract v1 sign-off remain |
 | 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | Planned |
 | 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | Planned |
@@ -46,14 +46,14 @@ The order above is the practical dependency order, not permission to bypass the 
 **Goal:** Give the team the agreed repository layout and safe baseline.
 
 - [x] Verify Git repository root, current branch, clean worktree, and `.env` ignore rule.
-- [ ] Create the component skeleton from [10-integration-contracts.md](10-integration-contracts.md) §5 for DB, proxy, API, `mock_llm`, and shared configuration.
-- [ ] Add `.env.example` containing variable names/placeholders only; never put real credentials in it.
-- [ ] Add the shared Python dependency specification and pin/record the initial tool versions.
-- [ ] Check `.gitignore` covers secrets, local environments, caches, and generated artifacts without ignoring needed source.
-- [ ] Run a secrets scan and confirm the bootstrap tree is ready for parallel work.
+- [x] Create the component skeleton from [10-integration-contracts.md](10-integration-contracts.md) §5 for DB, proxy, API, `mock_llm`, and shared configuration.
+- [x] Add `.env.example` containing variable names/placeholders only; never put real credentials in it.
+- [x] Add the shared Python dependency specification and pin/record the initial tool versions in `requirements.txt` and `requirements-dev.txt`.
+- [x] Check `.gitignore` covers secrets, local environments, caches, and generated artifacts without ignoring needed source.
+- [x] Scan for common credential patterns and confirm the bootstrap tree is ready for parallel work.
 
 **Acceptance:** Required folders/files exist, `.env` remains ignored, `.env.example` is safe, dependency setup is reproducible, and secrets scan is clean.  
-**Tests/evidence:** `git status`, ignore check, secrets-scan result; update X2 on the shared board.
+**Tests/evidence:** `git diff --check` passed; `pyproject.toml` parses; `pip install --dry-run -r requirements-dev.txt` resolves; `.env` is ignored and `.env.example` is trackable; common credential-pattern scan found no matches. Update X2 on the shared board after review/integration.
 
 ### 2. X1 — Sign off contracts and resolve/default open questions
 
@@ -252,3 +252,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | Date | Update |
 |---|---|
 | 2026-11-12 | Created from the repository documentation pack; verified Git/bootstrap facts and captured DEV-A task sequence and initial status. |
+| 2026-11-12 | Implemented X2 repository skeleton, safe `.env.example`, pinned Python requirements, and Python/frontend artifact ignores; local checks passed, awaiting review before integration. |

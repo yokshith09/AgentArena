@@ -55,7 +55,9 @@ Rules: **single writer per table** — `agents`/`tasks`: seed loader (B) (+ API 
 | Packaging | Docker Compose | D-02 |
 | Gateway | Bifrost by Maxim AI | Problem statement |
 | Config | `.env` (secrets), `pricing.yaml`, `faults/*.yaml`, `agent.yaml`, `task.yaml`, `grader.yaml` | Plan |
-| Python libs, versions, DB driver, ORM | **Not decided** — Dev-A picks at CP0 and records here | — |
+| Python | `>=3.12,<3.14` | Initial supported range; pinned packages are in `requirements.txt` and `requirements-dev.txt` |
+| Python dependencies | FastAPI 0.162.5, Uvicorn 0.54.0, HTTPX 0.28.1, Psycopg 3.3.8, PyYAML 6.0.3; dev: pytest 9.2.0, Hypothesis 6.170.15, Ruff 0.17.4 | Exact pins in the requirements files; checked 2026-11-12 |
+| ORM | Not selected | Use SQL/migrations per doc 07 unless a later decision records otherwise |
 
 ## 4. Data flow of one run
 
