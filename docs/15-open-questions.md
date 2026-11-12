@@ -35,7 +35,7 @@
   5. Inspection and comparison (step-by-step records)
 - **Keep** G1-G8 with equal weight, but make sure G-items for those five requirements are never cut.
 - **Action:** The pages are numbered "of 5" and we only have 01-04. Page 05 is either a fifth problem statement or the rules and judging page. **Ask whoever has the file for page 05.** If it has a rubric, replace this answer.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-03 · Submission requirements and cutoff
 - **Why:** sets the real deadline (we assume 14 Nov EOD with 15 Nov buffer) and the final deliverables.
@@ -46,7 +46,7 @@
 - **Answer:** The sheet footer states: build **1-15 Nov 2026**, teams of 1-4, online and global, judging **29 Nov 2026**. So the last build day is **15 Nov**; keep the plan's **14 Nov EOD target with 15 Nov as buffer**.
 - **Not in the pages we have:** the cutoff time and timezone, the submission form, video limits, and whether judges run code. Defaults apply: repo link + README + ≤5 min demo video, local-only demo.
 - **Action:** check page 05 or the hackathon portal for the exact cutoff time. Until then, plan to submit by the evening of 14 Nov IST.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-04 · Who is Dev-A / Dev-B / Dev-C
 - **Why:** every task has one accountable owner; names needed on the board.
@@ -60,7 +60,7 @@
   - **Dev-C (Yokshith):** tasks, reference agents, dashboard, Tavily research agent, docs, demo.
   - Keep cut rule 7 as a safety net: if the hardened sandbox (B4) is not working by the end of the first end-to-end run, fall back to subprocess isolation.
 - **TEAM must provide:** the third member's name, plus hours per day for 12, 13, 14, 15 Nov and any hard gaps for all three people. Akhil's timezone is IST (UTC+05:30); the others to confirm.
-- **Date / By:** 2026-11-12 / Claude (draft), availability pending
+- **Date / By:** 2026-11-12 / draft (from docs), availability pending
 
 ### OQ-05 · Provider, model, key and budget
 - **Why:** blocks A1 (Bifrost call), `pricing.yaml`, run sizing, spend cap.
@@ -96,7 +96,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 
 - **Action:** a 10-minute smoke test: one non-streaming call, one streaming call with `include_usage`, one call with `x-bf-lh-run_id: test1`, then check the log entry and logs API.
 - **Default:** if V-01 fails, the proxy calls the provider directly and the deviation goes on the Limitations page.
-- **Date / By:** 2026-11-12 / Claude (draft from docs)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-07 · How to inject "broken tool" faults
 - **Why:** black-box agents have no tool hook; options differ in realism and effort.
@@ -105,7 +105,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 
 **Answer (2026-11-12):**
 - **Answer: (a)**, an env var read by our shared tools module (P-08). It is reproducible, works for all three reference agents, and is quick to build. Add (b), the PATH shim, **only if time remains**, as a demo of black-box fault injection on a third-party agent. Be honest on the Limitations page that (a) only covers our own agents.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-08 · Docker availability (every dev + demo machine)
 - **Why:** blocks B4 (hardened sandbox) and `docker compose up` itself.
@@ -130,7 +130,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 **Answer (2026-11-12):**
 - **Answer (rules):** the repo `https://github.com/yokshith09/AgentArena.git` belongs to Yokshith, so **Yokshith must invite Akhil and the third member as collaborators with write access**. No branch protection, squash merge, rules as in HACKATHON_PLAN.md §4. **A `contract` PR is reviewed and merged by someone other than its author.**
 - **TEAM:** confirm Akhil and the third member have accepted the invitation and can push a test branch.
-- **Date / By:** rules 2026-11-12 / Claude (draft), access pending
+- **Date / By:** rules 2026-11-12 / draft (from docs), access pending
 
 ### OQ-10 · Frontend tooling
 - **Why:** affects scaffold (C1) only.
@@ -138,7 +138,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 
 **Answer (2026-11-12):**
 - **Answer:** **Vite + TypeScript**, **plain CSS** (no UI library), and **no chart library**: use tables and CSS bars for the leaderboard and comparison. Reconsider a small chart library only for the optional cost-vs-success scatter after the core views work.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-11 · Demo hosting
 - **Why:** hosted demo adds deployment work not in the board.
@@ -147,7 +147,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 
 **Answer (2026-11-12):**
 - **Answer:** **Local laptop demo only**, plus the demo video and a data dump (exported JSON/SQL) so judges can see results without running anything. The pages we have do not ask for a hosted URL, and judging is online on 29 Nov, so a video plus a clear `docker compose up` quickstart is the safe combination. Confirm against page 05.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ### OQ-12 · Existing work outside this folder
 - **Why:** plan assumes zero implemented code; any prior code changes the audit.
@@ -168,7 +168,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 - **Answer:** Tavily's **free "Researcher" plan gives 1,000 credits per month with no credit card**. A basic search costs **1 credit**; deeper searches cost more (check the credit page before using advanced depth). A third-party source lists rate limits of about **100 requests/min on a development key** and 1,000 on a production key; verify this in the Tavily dashboard. A free student program also exists.
 - **Plan:** one free-tier key, **one person creates the account and shares the key via `.env`**. Use `basic` depth and a small `max_results`. The budget is tiny (two research tasks × N runs × agents is well under 1,000), but the quota is shared across dev and final runs, so **cache or replay Tavily responses** the way we do LLM responses.
 - **Until the key exists:** C14 uses a stub response and stays Blocked for real runs.
-- **Date / By:** 2026-11-12 / Claude (draft), account creation pending
+- **Date / By:** 2026-11-12 / draft (from docs), account creation pending
 
 ### OQ-14 · What exactly does "Integrate Bifrost + Tavily" require? (new)
 - **Why:** we assume Tavily is used as a search tool by an agent (C14) and judges look for it in the trace. The problem sheet may mean something different (e.g. Tavily inside the platform, or inside every research task).
@@ -179,7 +179,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 - **Answer:** In pages 01-04, the only Tavily text is the footer line **"INTEGRATE BIFROST + TAVILY"**, repeated on every page. No sentence explains how or where Tavily must appear. For Problem 02 the only related guidance is that Bifrost can give gateway-level visibility into model requests and operational metrics, while agent steps and tool execution need extra instrumentation. So the sheet does not require a specific shape.
 - **Decision:** keep the default (DA-12), and make Tavily **visible in three places** so a judge cannot miss it: (1) the research agent's Tavily tool calls in the run trace, (2) the architecture diagram and README, and (3) a dashboard filter for the research category. Bifrost is visible as the gateway in every trace.
 - **Action:** if page 05 or the organizers say otherwise, update this answer.
-- **Date / By:** 2026-11-12 / Claude (draft)
+- **Date / By:** 2026-11-12 / draft (from docs)
 
 ---
 ## What only the team can still fill in
