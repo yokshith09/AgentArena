@@ -8,11 +8,23 @@ import type {
   TaskSummary,
 } from '../types'
 
-export type FixtureState = 'success' | 'empty' | 'infra' | 'fault' | 'partial' | 'halted'
+export type FixtureState =
+  | 'success'
+  | 'empty'
+  | 'infra'
+  | 'fault'
+  | 'partial'
+  | 'halted'
+  | 'loading'
+  | 'error'
 
 export type DashboardFixture = {
   label: string
   benchmark: Benchmark | null
+  catalog: {
+    agents: Agent[]
+    tasks: TaskSummary[]
+  }
   results: ResultRow[]
   runs: RunDetail[]
   events: Event[]
@@ -141,6 +153,30 @@ const baseRun: RunDetail = {
     error: null,
   },
   workspace_diff: '--- a/solution.py\n+++ b/solution.py\n@@ -1,2 +1,3 @@\n-return value\n+return value + 1',
+}
+
+const secondRun: RunDetail = {
+  ...baseRun,
+  run_id: '33333333-3333-4333-8333-333333333333',
+  repeat_index: 2,
+  status: 'FAIL',
+  passed: false,
+  tokens_in: 980,
+  tokens_out: 210,
+  cost: 0.0038,
+  duration: 32.4,
+  error: 'The boundary condition still fails for the final element.',
+  grader_result: {
+    passed: false,
+    tamper_detected: false,
+    suites: [
+      { name: 'visible', passed: false, tests_total: 4, tests_failed: 1 },
+      { name: 'hidden', passed: false, tests_total: 3, tests_failed: 1 },
+    ],
+    summary: 'Two checks failed.',
+    error: null,
+  },
+  workspace_diff: '--- a/solution.py\n+++ b/solution.py\n@@ -1,2 +1,2 @@\n-return value\n+return value - 1',
 }
 
 const baseEvents: Event[] = [
@@ -322,16 +358,34 @@ export const scenarios: Scenario[] = [
 ]
 
 export const mockFixtures: Record<FixtureState, DashboardFixture> = {
+  loading: {
+    label: 'Loading benchmark data',
+    benchmark: null,
+    catalog: { agents: [], tasks: [] },
+    results: [],
+    runs: [],
+    events: [],
+  },
+  error: {
+    label: 'Benchmark data unavailable',
+    benchmark: null,
+    catalog: { agents: [], tasks: [] },
+    results: [],
+    runs: [],
+    events: [],
+  },
   success: {
     label: 'Completed benchmark',
     benchmark: completed,
+    catalog: { agents, tasks },
     results: [makeResult('agent-a-plain'), agentBResult],
-    runs: [baseRun],
+    runs: [baseRun, secondRun],
     events: baseEvents,
   },
   empty: {
-    label: 'No benchmarks',
+    label: 'Empty workspace',
     benchmark: null,
+    catalog: { agents: [], tasks: [] },
     results: [],
     runs: [],
     events: [],
@@ -346,6 +400,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 1,
       excluded: 0,
     }),
+    catalog: { agents, tasks },
     results: [
       makeResult('agent-a-plain', {
         runs_counted: 1,
@@ -361,7 +416,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       }),
     ],
     runs: [{ ...baseRun, status: 'INFRA_ERROR', passed: null, error: 'Runner could not start.' }],
-    events: baseEvents,
+    events: [],
   },
   fault: {
     label: 'Injected provider fault',
@@ -373,6 +428,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 0,
       excluded: 0,
     }),
+    catalog: { agents, tasks },
     results: [
       makeResult('agent-a-plain', {
         scenario: 'provider_503_outage',
@@ -400,6 +456,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 1,
       excluded: 0,
     }),
+    catalog: { agents, tasks },
     results: [makeResult('agent-a-plain')],
     runs: [baseRun],
     events: baseEvents,
@@ -414,6 +471,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 1,
       excluded: 0,
     }, 5),
+    catalog: { agents, tasks },
     results: [makeResult('agent-a-plain')],
     runs: [baseRun],
     events: baseEvents,

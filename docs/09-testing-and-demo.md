@@ -1,6 +1,6 @@
 # 09 · Testing Strategy & End-to-End Demo Acceptance
 
-> Status: Draft. **No test has been run; every "Result" cell is `not run` until someone records evidence.** Owners per [11](11-team-execution-plan.md).
+> Status: Draft. Results are recorded per test row; T-17 has a manual browser result, and all other `not run` entries remain pending. Owners per [11](11-team-execution-plan.md).
 
 ## 1. Strategy
 1. **Contract-first:** fixtures from [08](08-api-contracts.md) §4 / `db/fixtures` are validated against live response models (T-16, T-30) — the main guard against A/B/C drift.
@@ -31,7 +31,7 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | B | P0 | not run |
 | T-15 | Stats | Wilson, bootstrap (fixed seed), median/std, edge cases (n=0,1, all pass) vs hand-computed goldens | A | P0 | not run |
 | T-16 | API | Each endpoint's response validates against models and mock payloads; error envelope; launch validation rules | A | P0 | not run |
-| T-17 | UI | Every screen renders loading/empty/error/success/partial/halted from fixtures; MOCK ribbon visible in mock mode | C | P0 | not run |
+| T-17 | UI | Every screen renders loading/empty/error/success/partial/halted from fixtures; MOCK ribbon visible in mock mode | C | P0 | pass (manual browser check: 9 data routes × 8 fixture states, 72 checks; `/limitations` static route and mock ribbon also checked) |
 | T-18 | UI+API | Live mode: leaderboard and run trace for a 2×5×3 benchmark; load < 2 s (NFR-04) | C | P0 | not run |
 | T-19 | UI | Accessibility checklist ([05](05-ux-spec.md) §7): keyboard-only pass, focus, contrast spot-check, status not color-only | C | P0 | not run |
 | T-20 | Faults | 503 and 429 faults fire exactly as defined (first N), emit `fault_injected`, are reproducible with same run_id | A | P0 | not run |

@@ -276,6 +276,69 @@
   background: #fff2cc;
 }
 
+.loading-region {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.loading-heading,
+.loading-row {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(80px, 160px);
+  align-items: center;
+  gap: 20px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.loading-heading {
+  min-height: 40px;
+}
+
+.loading-heading span,
+.loading-row span {
+  height: 14px;
+  display: block;
+  border-radius: 2px;
+  background: var(--active);
+}
+
+.loading-heading span:first-child,
+.loading-row span:first-child {
+  width: min(100%, 220px);
+}
+
+.loading-heading span:last-child,
+.loading-row span:last-child {
+  width: min(100%, 112px);
+  justify-self: end;
+}
+
+.fixture-error-state {
+  max-width: 720px;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.fixture-error-state h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fixture-error-state p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .section-toolbar {
   display: flex;
   align-items: center;
@@ -588,7 +651,7 @@ progress {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1px;
   margin-bottom: 26px;
   overflow: hidden;
@@ -623,7 +686,7 @@ progress {
 }
 
 .tabs button {
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 2px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -644,6 +707,62 @@ progress {
   padding-top: 18px;
 }
 
+.run-neighbors {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.run-neighbors [aria-disabled="true"] {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+.timeline-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.timeline-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 3px;
+}
+
+.timeline-filters button {
+  min-height: 36px;
+  flex: 0 0 auto;
+  padding: 0 10px;
+  border: 1px solid var(--control);
+  border-radius: 6px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.timeline-filters button[aria-pressed="true"] {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--raised);
+}
+
+.timeline-count {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .tab-content h2,
 .content-section h2,
 .limitations-list h2 {
@@ -654,7 +773,7 @@ progress {
 }
 
 .event-list {
-  max-width: 900px;
+  max-width: none;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -671,6 +790,10 @@ progress {
   background: #fff2cc;
 }
 
+.event-list li.event-related-to-fault {
+  border-left: 3px solid var(--warning);
+}
+
 .event-topline {
   display: flex;
   justify-content: space-between;
@@ -683,6 +806,23 @@ progress {
   color: var(--muted);
   font-family: var(--mono);
   font-size: 11px;
+}
+
+.event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.event-related-link {
+  display: inline-block;
+  margin: 2px 0 8px;
+  color: var(--accent);
+  font-size: 12px;
+  text-underline-offset: 3px;
 }
 
 .event-list li > p {
@@ -699,6 +839,23 @@ progress {
 .event-list summary {
   width: fit-content;
   cursor: pointer;
+}
+
+.grader-summary {
+  margin-bottom: 18px;
+}
+
+.grader-summary p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.grader-result table caption {
+  padding: 0 12px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
 }
 
 .code-block {
@@ -837,6 +994,12 @@ progress {
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 767px) {
   .app-header {
     min-height: 56px;
@@ -960,6 +1123,27 @@ progress {
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .run-neighbors {
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .run-neighbors .button {
+    padding: 0 9px;
+    font-size: 12px;
+  }
+
+  .timeline-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .timeline-filters {
+    width: calc(100% + 16px);
+    margin-right: -16px;
   }
 
   .run-row {

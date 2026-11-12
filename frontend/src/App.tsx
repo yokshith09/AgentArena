@@ -3,11 +3,12 @@ import {
   agents,
   mockFixtures,
   scenarios,
-  tasks,
   type DashboardFixture,
   type FixtureState,
 } from './mocks/fixtures'
-import type { Benchmark, Event, ResilienceRow, ResultRow, RunDetail } from './types'
+import FixtureNotice from './components/FixtureNotice'
+import RunDetailPage from './components/RunDetail'
+import type { ResilienceRow, ResultRow, RunDetail } from './types'
 import './App.css'
 
 const stateOptions: Array<{ value: FixtureState; label: string }> = [
@@ -17,6 +18,8 @@ const stateOptions: Array<{ value: FixtureState; label: string }> = [
   { value: 'fault', label: 'Fault injected' },
   { value: 'partial', label: 'In progress' },
   { value: 'halted', label: 'Spend cap halted' },
+  { value: 'loading', label: 'Loading' },
+  { value: 'error', label: 'Error' },
 ]
 
 const navigation = [
@@ -39,6 +42,36 @@ type Route =
   | 'catalog'
   | 'security'
   | 'limitations'
+
+const routeTitles: Record<Route, string> = {
+  leaderboard: 'Leaderboard',
+  benchmarks: 'Benchmarks',
+  'new-benchmark': 'New benchmark',
+  compare: 'Compare agents',
+  'run-detail': 'Run detail',
+  'run-list': 'Runs',
+  resilience: 'Failure scenarios',
+  catalog: 'Catalog',
+  security: 'Security',
+  limitations: 'Limitations',
+}
+
+const routeDescriptions: Record<Route, string> = {
+  leaderboard: 'Agent performance across the selected benchmark.',
+  benchmarks: 'Track benchmark progress, spend, and the runs behind each result.',
+  'new-benchmark': 'Choose a shared set of agents, tasks, and scenarios.',
+  compare: 'Compare outcomes on the same task and scenario.',
+  'run-detail': 'Inspect the trace and evidence for one run.',
+  'run-list': 'Run records for the selected benchmark and filters.',
+  resilience: 'Compare baseline performance with selected injected faults.',
+  catalog: 'Agents and tasks available to benchmark.',
+  security: 'Security scoring is planned for a later milestone.',
+  limitations: 'What these benchmark results can and cannot tell you.',
+}
+
+function isFixtureState(value: string | null): value is FixtureState {
+  return stateOptions.some(({ value: state }) => state === value)
+}
 
 function getRoute(path: string): Route {
   if (path === '/benchmarks/new') return 'new-benchmark'
@@ -67,9 +100,7 @@ function App() {
   const route = getRoute(window.location.pathname)
   const params = new URLSearchParams(window.location.search)
   const requestedState = params.get('state')
-  const fixtureState = stateOptions.some(({ value }) => value === requestedState)
-    ? requestedState as FixtureState
-    : 'success'
+  const fixtureState = isFixtureState(requestedState) ? requestedState : 'success'
   const fixture = mockFixtures[fixtureState]
   const liveMode = params.get('mode') === 'live'
   const [menuOpen, setMenuOpen] = useState(false)
@@ -183,28 +214,73 @@ function RouteView({
   fixture: DashboardFixture
   fixtureState: FixtureState
 }) {
+  if (route !== 'limitations' && fixtureState === 'loading') {
+    return <FixtureLoading title={routeTitles[route]} description={routeDescriptions[route]} />
+  }
+  if (route !== 'limitations' && fixtureState === 'error') {
+    return <FixtureError title={routeTitles[route]} description={routeDescriptions[route]} />
+  }
+
   switch (route) {
     case 'leaderboard':
       return <Leaderboard fixture={fixture} fixtureState={fixtureState} />
     case 'benchmarks':
-      return <Benchmarks benchmark={fixture.benchmark} />
+      return <Benchmarks fixture={fixture} fixtureState={fixtureState} />
     case 'new-benchmark':
-      return <NewBenchmark />
+      return <NewBenchmark fixture={fixture} fixtureState={fixtureState} />
     case 'compare':
-      return <Compare fixture={fixture} />
+      return <Compare fixture={fixture} fixtureState={fixtureState} />
     case 'run-detail':
-      return <RunDetailPage fixture={fixture} />
+      return <RunDetailPage fixture={fixture} fixtureState={fixtureState} />
     case 'run-list':
-      return <RunList fixture={fixture} />
+      return <RunList fixture={fixture} fixtureState={fixtureState} />
     case 'resilience':
       return <Resilience fixture={fixture} fixtureState={fixtureState} />
     case 'catalog':
-      return <Catalog />
+      return <Catalog fixtureState={fixtureState} fixture={fixture} />
     case 'security':
-      return <Security />
+      return <Security fixtureState={fixtureState} fixture={fixture} />
     case 'limitations':
       return <Limitations />
   }
+}
+
+function FixtureLoading({ title, description }: { title: string; description: string }) {
+  return (
+    <>
+      <PageHeading title={title} description={description} />
+      <section
+        className="loading-region"
+        role="status"
+        aria-label={`Loading ${title.toLowerCase()}`}
+        aria-busy="true"
+      >
+        <span className="sr-only">Loading {title.toLowerCase()} data.</span>
+        <div className="loading-heading" aria-hidden="true">
+          <span />
+          <span />
+        </div>
+        <div className="loading-row" aria-hidden="true"><span /><span /></div>
+        <div className="loading-row" aria-hidden="true"><span /><span /></div>
+        <div className="loading-row" aria-hidden="true"><span /><span /></div>
+      </section>
+    </>
+  )
+}
+
+function FixtureError({ title, description }: { title: string; description: string }) {
+  return (
+    <>
+      <PageHeading title={title} description={description} />
+      <section className="fixture-error-state" role="alert" aria-labelledby="fixture-error-title">
+        <h2 id="fixture-error-title">Could not load {title.toLowerCase()} data</h2>
+        <p>This simulated fixture error made no live API request.</p>
+        <a className="button button-secondary" href={withQuery({ state: 'success' })}>
+          Return to completed fixture
+        </a>
+      </section>
+    </>
+  )
 }
 
 function PageHeading({
@@ -225,40 +301,6 @@ function PageHeading({
       {action}
     </div>
   )
-}
-
-function FixtureNotice({ fixture, state }: { fixture: DashboardFixture; state: FixtureState }) {
-  if (state === 'partial' && fixture.benchmark) {
-    return (
-      <div className="notice notice-info" role="status">
-        Results incomplete ({fixture.benchmark.progress.done} of {fixture.benchmark.progress.total} runs).
-        Counts reflect the runs available so far.
-      </div>
-    )
-  }
-  if (state === 'halted' && fixture.benchmark) {
-    return (
-      <div className="notice notice-warning" role="alert">
-        Stopped at spend cap ${fixture.benchmark.config.spend_cap_usd.toFixed(2)}.
-        No additional runs were scheduled.
-      </div>
-    )
-  }
-  if (state === 'infra') {
-    return (
-      <div className="notice notice-warning" role="status">
-        INFRA_ERROR runs are excluded from statistics. The exclusion count is shown in each result row.
-      </div>
-    )
-  }
-  if (state === 'fault') {
-    return (
-      <div className="notice notice-info" role="status">
-        Fault scenario: provider_503_outage. Injected failures remain visible in the run trace.
-      </div>
-    )
-  }
-  return null
 }
 
 function Leaderboard({
@@ -433,7 +475,14 @@ function LeaderboardRow({
   )
 }
 
-function Benchmarks({ benchmark }: { benchmark: Benchmark | null }) {
+function Benchmarks({
+  fixture,
+  fixtureState,
+}: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
+  const { benchmark } = fixture
   return (
     <>
       <PageHeading
@@ -441,6 +490,7 @@ function Benchmarks({ benchmark }: { benchmark: Benchmark | null }) {
         description="Track benchmark progress, spend, and the runs behind each result."
         action={<a className="button button-primary" href="/benchmarks/new">New benchmark</a>}
       />
+      <FixtureNotice fixture={fixture} state={fixtureState} />
       {!benchmark ? (
         <EmptyState
           title="No benchmarks yet"
@@ -485,8 +535,16 @@ function Benchmarks({ benchmark }: { benchmark: Benchmark | null }) {
   )
 }
 
-function NewBenchmark() {
+function NewBenchmark({
+  fixture,
+  fixtureState,
+}: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
   const [message, setMessage] = useState('')
+  const catalogAgents = fixture.catalog.agents
+  const catalogTasks = fixture.catalog.tasks
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('Mock preview only. No benchmark was launched; live API wiring is not available yet.')
@@ -494,52 +552,68 @@ function NewBenchmark() {
   return (
     <>
       <PageHeading title="New benchmark" description="Choose a shared set of agents, tasks, and scenarios." />
-      <form className="launch-form" onSubmit={submit}>
-        <label>
-          Benchmark name
-          <input required maxLength={80} defaultValue="Python repair · baseline" />
-        </label>
-        <label>
-          Agents
-          <select multiple defaultValue={agents.map(({ agent_id }) => agent_id)} size={agents.length}>
-            {agents.map((agent) => <option key={agent.agent_id} value={agent.agent_id}>{agent.name}</option>)}
-          </select>
-        </label>
-        <label>
-          Tasks
-          <select multiple defaultValue={tasks.map(({ task_id }) => task_id)} size={tasks.length}>
-            {tasks.map((task) => <option key={task.task_id} value={task.task_id}>{task.task_id}</option>)}
-          </select>
-        </label>
-        <label>
-          Scenarios
-          <select multiple defaultValue={['baseline']} size={scenarios.length}>
-            {scenarios.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.id}</option>)}
-          </select>
-        </label>
-        <div className="form-pair">
+      <FixtureNotice fixture={fixture} state={fixtureState} />
+      {catalogAgents.length === 0 || catalogTasks.length === 0 ? (
+        <EmptyState
+          title="Agents and tasks are required"
+          message="Add an agent and a validated task before configuring a benchmark."
+          action={<a className="button button-secondary" href="/catalog">Open catalog</a>}
+        />
+      ) : (
+        <form className="launch-form" onSubmit={submit}>
           <label>
-            Runs per combination
-            <input type="number" min="1" max="10" defaultValue="3" />
+            Benchmark name
+            <input required maxLength={80} defaultValue="Python repair · baseline" />
           </label>
           <label>
-            Spend cap (USD)
-            <input type="number" min="0.01" step="0.01" required defaultValue="5.00" />
+            Agents
+            <select multiple defaultValue={catalogAgents.map(({ agent_id }) => agent_id)} size={catalogAgents.length}>
+              {catalogAgents.map((agent) => <option key={agent.agent_id} value={agent.agent_id}>{agent.name}</option>)}
+            </select>
           </label>
-        </div>
-        <button className="button button-primary" type="submit">Preview launch</button>
-        {message && <p className="notice notice-info" role="status">{message}</p>}
-      </form>
+          <label>
+            Tasks
+            <select multiple defaultValue={catalogTasks.map(({ task_id }) => task_id)} size={catalogTasks.length}>
+              {catalogTasks.map((task) => <option key={task.task_id} value={task.task_id}>{task.task_id}</option>)}
+            </select>
+          </label>
+          <label>
+            Scenarios
+            <select multiple defaultValue={['baseline']} size={scenarios.length}>
+              {scenarios.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.id}</option>)}
+            </select>
+          </label>
+          <div className="form-pair">
+            <label>
+              Runs per combination
+              <input type="number" min="1" max="10" defaultValue="3" />
+            </label>
+            <label>
+              Spend cap (USD)
+              <input type="number" min="0.01" step="0.01" required defaultValue="5.00" />
+            </label>
+          </div>
+          <button className="button button-primary" type="submit">Preview launch</button>
+          {message && <p className="notice notice-info" role="status">{message}</p>}
+        </form>
+      )}
     </>
   )
 }
 
-function Compare({ fixture }: { fixture: DashboardFixture }) {
+function Compare({
+  fixture,
+  fixtureState,
+}: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
   const first = fixture.results[0]
   const second = fixture.results[1]
   return (
     <>
       <PageHeading title="Compare agents" description="Compare outcomes on the same task and scenario." />
+      <FixtureNotice fixture={fixture} state={fixtureState} />
       {first && second ? (
         <div className="table-scroll" role="region" aria-label="Agent comparison" tabIndex={0}>
           <table>
@@ -582,60 +656,17 @@ function Compare({ fixture }: { fixture: DashboardFixture }) {
   )
 }
 
-function RunDetailPage({ fixture }: { fixture: DashboardFixture }) {
-  const run = fixture.runs[0]
-  const [tab, setTab] = useState<'Timeline' | 'Diff' | 'Grader' | 'Environment'>('Timeline')
-  if (!run) {
-    return (
-      <>
-        <PageHeading title="Run detail" description="Inspect the trace and evidence for one run." />
-        <EmptyState title="Run not found in this fixture" message="Choose a fixture state with a run to view its detail." />
-      </>
-    )
-  }
-  const tabs = ['Timeline', 'Diff', 'Grader', 'Environment'] as const
-  return (
-    <>
-      <PageHeading title="Run detail" description={run.run_id} action={<StatusBadge status={run.status} />} />
-      <div className="summary-grid">
-        <SummaryValue label="Agent" value={agents.find(({ agent_id }) => agent_id === run.agent_id)?.name ?? run.agent_id} />
-        <SummaryValue label="Task" value={run.task_id} />
-        <SummaryValue label="Scenario" value={run.scenario} />
-        <SummaryValue label="Model" value={run.model ?? '—'} />
-        <SummaryValue label="Tokens in / out" value={`${run.tokens_in ?? '—'} / ${run.tokens_out ?? '—'}`} />
-        <SummaryValue label="Cost" value={`${formatMoney(run.cost)} · ${run.cost_confidence ?? 'unknown'}`} />
-        <SummaryValue label="Duration" value={run.duration === null ? '—' : `${run.duration.toFixed(1)} s`} />
-        <SummaryValue label="Steps / tool calls" value={`${run.steps ?? '—'} / ${run.tool_calls ?? '—'}`} />
-      </div>
-      <div className="tabs" role="tablist" aria-label="Run detail sections">
-        {tabs.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            id={`run-tab-${item.toLowerCase()}`}
-            aria-selected={tab === item}
-            onClick={() => setTab(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-      <section className="tab-content" role="tabpanel" aria-labelledby={`run-tab-${tab.toLowerCase()}`}>
-        <h2>{tab}</h2>
-        {tab === 'Timeline' && <EventTimeline events={fixture.events} />}
-        {tab === 'Diff' && <pre className="code-block">{run.workspace_diff ?? 'No workspace diff is available.'}</pre>}
-        {tab === 'Grader' && <pre className="code-block">{JSON.stringify(run.grader_result, null, 2)}</pre>}
-        {tab === 'Environment' && <pre className="code-block">{JSON.stringify(run.env_fingerprint, null, 2)}</pre>}
-      </section>
-    </>
-  )
-}
-
-function RunList({ fixture }: { fixture: DashboardFixture }) {
+function RunList({
+  fixture,
+  fixtureState,
+}: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
   return (
     <>
       <PageHeading title="Runs" description="Run records for the selected benchmark and filters." />
+      <FixtureNotice fixture={fixture} state={fixtureState} />
       {fixture.runs.length ? (
         <div className="run-list">
           {fixture.runs.map((run) => (
@@ -656,27 +687,6 @@ function RunList({ fixture }: { fixture: DashboardFixture }) {
   )
 }
 
-function EventTimeline({ events }: { events: Event[] }) {
-  if (!events.length) return <p className="muted-copy">No events recorded for this run.</p>
-  return (
-    <ol className="event-list">
-      {events.map((event) => (
-        <li key={event.id} className={event.type === 'fault_injected' ? 'event-fault' : ''}>
-          <div className="event-topline">
-            <strong>{event.type}</strong>
-            <time>{new Date(event.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time>
-          </div>
-          <p>{event.error ?? eventSummary(event)}</p>
-          <details>
-            <summary>Event payload</summary>
-            <pre className="code-block">{JSON.stringify(event.payload, null, 2)}</pre>
-          </details>
-        </li>
-      ))}
-    </ol>
-  )
-}
-
 function Resilience({
   fixture,
   fixtureState,
@@ -686,7 +696,7 @@ function Resilience({
 }) {
   const rows: ResilienceRow[] = fixture.results.map((result) => ({
     agent_id: result.agent_id,
-    scenario: fixtureState === 'fault' ? 'provider_503_outage' : 'provider_503_outage',
+    scenario: 'provider_503_outage',
     baseline_pass_rate: {
       passed: 11,
       n: 15,
@@ -734,17 +744,21 @@ function Resilience({
   )
 }
 
-function Catalog() {
+function Catalog({ fixture, fixtureState }: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
   return (
     <>
       <PageHeading title="Catalog" description="Agents and tasks available to benchmark." />
+      <FixtureNotice fixture={fixture} state={fixtureState} />
       <section className="content-section">
         <h2>Agents</h2>
         <div className="table-scroll">
           <table>
             <thead><tr><th scope="col">Name</th><th scope="col">Mode</th><th scope="col">Model</th><th scope="col">Description</th></tr></thead>
             <tbody>
-              {agents.map((agent) => (
+              {fixture.catalog.agents.map((agent) => (
                 <tr key={agent.agent_id}>
                   <th scope="row">{agent.name}<span className="cell-detail mono">{agent.agent_id}</span></th>
                   <td>{agent.mode}</td>
@@ -752,6 +766,9 @@ function Catalog() {
                   <td>{agent.description}</td>
                 </tr>
               ))}
+              {fixture.catalog.agents.length === 0 && (
+                <tr><td colSpan={4}>No agents registered.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -762,7 +779,7 @@ function Catalog() {
           <table>
             <thead><tr><th scope="col">Task</th><th scope="col">Category</th><th scope="col">Grader</th><th scope="col">Validated</th><th scope="col">Weak flag</th></tr></thead>
             <tbody>
-              {tasks.map((task) => (
+              {fixture.catalog.tasks.map((task) => (
                 <tr key={task.task_id}>
                   <th scope="row">{task.task_id}</th>
                   <td>{task.category}</td>
@@ -771,6 +788,9 @@ function Catalog() {
                   <td>{task.weak === null ? 'Not assessed' : task.weak ? 'Weak' : 'No'}</td>
                 </tr>
               ))}
+              {fixture.catalog.tasks.length === 0 && (
+                <tr><td colSpan={5}>No tasks are available.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -779,10 +799,14 @@ function Catalog() {
   )
 }
 
-function Security() {
+function Security({ fixture, fixtureState }: {
+  fixture: DashboardFixture
+  fixtureState: FixtureState
+}) {
   return (
     <>
       <PageHeading title="Security" description="Security scoring is planned for a later milestone." />
+      <FixtureNotice fixture={fixture} state={fixtureState} />
       <div className="notice notice-info" role="status">
         No security assessment data is available in this scaffold. Any future score will be labelled
         as a baseline assessment, not an audit.
@@ -878,14 +902,6 @@ function formatMoneyInterval(low: number | null, high: number | null) {
 
 function formatStat(value: number | null) {
   return value === null ? '—' : value.toFixed(1)
-}
-
-function eventSummary(event: Event) {
-  const tool = event.payload.name
-  const status = event.payload.status_code
-  if (typeof tool === 'string') return `Requested ${tool}.`
-  if (typeof status === 'number') return `HTTP ${status} · ${event.latency ?? '—'} ms`
-  return `Run event recorded${event.agent_role ? ` for ${event.agent_role}` : ''}.`
 }
 
 export default App
