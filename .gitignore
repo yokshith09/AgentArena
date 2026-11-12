@@ -2,8 +2,25 @@
 .env.*
 !.env.example
 .anchor/
-node_modules/
+
+# Python
+.venv/
+venv/
 __pycache__/
 data/
-__pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# Generated output
+build/
+dist/
+*.log

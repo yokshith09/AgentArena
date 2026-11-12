@@ -5,7 +5,7 @@ Benchmarking platform for AI agents (Global AI Hackathon · Problem Statement 02
 **Status:** implementation is underway. The foundation includes the database schema and fixtures, Docker Compose configuration, contract schemas, and scripted `mock_llm`; the frontend has not been scaffolded yet.
 
 ## Documentation
-- Start here: [HACKATHON_PLAN.md](HACKATHON_PLAN.md) · [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) · [Task board](docs/14-task-board.md) · full index: [docs/README.md](docs/README.md)
+- Start here: [HACKATHON_PLAN.md](HACKATHON_PLAN.md) · [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) · [Task board](docs/14-task-board.md) · [DEV-A task tracker](docs/DEV-A-TASK-TRACKER.md) · full index: [docs/README.md](docs/README.md)
 - [Strategy & decision register](docs/01-hackathon-strategy.md) · [PRD](docs/02-prd.md) · [Feature specs](docs/03-feature-specs.md) · [TRD](docs/04-trd-architecture.md)
 - [UX](docs/05-ux-spec.md) · [App flow](docs/06-app-flow.md) · [Data schema](docs/07-data-schema.md) · [API contracts](docs/08-api-contracts.md)
 - [Testing & demo](docs/09-testing-and-demo.md) · [Integration contracts](docs/10-integration-contracts.md) · [Team plan](docs/11-team-execution-plan.md) · [Delivery plan](docs/12-delivery-plan.md) · [Traceability](docs/13-traceability.md)

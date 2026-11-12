@@ -7,7 +7,7 @@ Status: **Draft for CP0 sign-off (2026-11-11).** The documentation describes the
 | If you are… | Read |
 |---|---|
 | Anyone, first | [01 Strategy & decision register](01-hackathon-strategy.md) → [02 PRD](02-prd.md) |
-| Dev-A Platform | [04 TRD](04-trd-architecture.md), [07 Schema](07-data-schema.md), [08 API](08-api-contracts.md), [10 Integration](10-integration-contracts.md) |
+| Dev-A Platform | [DEV-A task tracker](DEV-A-TASK-TRACKER.md), [04 TRD](04-trd-architecture.md), [07 Schema](07-data-schema.md), [08 API](08-api-contracts.md), [10 Integration](10-integration-contracts.md) |
 | Dev-B Execution | [03 Features](03-feature-specs.md) (F-02…F-06, F-10), [07](07-data-schema.md) §5–7, [10](10-integration-contracts.md) |
 | Dev-C Experience | [05 UX](05-ux-spec.md), [06 Flow](06-app-flow.md), [08](08-api-contracts.md) §3–4, [10](10-integration-contracts.md) §4 |
 | Reviewer / lead | [09 Testing & demo](09-testing-and-demo.md), [11 Team plan](11-team-execution-plan.md), [12 Delivery plan](12-delivery-plan.md), [13 Traceability](13-traceability.md), [14 Task board](14-task-board.md), [PROJECT_ROADMAP](../PROJECT_ROADMAP.md) |
@@ -31,6 +31,7 @@ Status: **Draft for CP0 sign-off (2026-11-11).** The documentation describes the
 | 13 | [Traceability](13-traceability.md) | Criterion → requirement → feature → owner → test → evidence |
 | 14 | [Task board](14-task-board.md) | Task IDs, owners, estimates, acceptance, tests, status |
 | 15 | [Open questions](15-open-questions.md) | Expanded OQs with options, defaults and recorded answers |
+| — | [DEV-A task tracker](DEV-A-TASK-TRACKER.md) | DEV-A's ordered task checklist, progress, blockers, and evidence |
 | — | [PROJECT_ROADMAP](../PROJECT_ROADMAP.md) | Current focus, audit, milestones, criteria map |
 | — | [HACKATHON_PLAN](../HACKATHON_PLAN.md) | Allocation, dependency graph, SDLC rules, risks, cuts |
 | — | [PPT framework](PPT_FRAMEWORK.md) | Placeholder, supplied separately |
