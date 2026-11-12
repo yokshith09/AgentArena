@@ -86,14 +86,18 @@ function getRoute(path: string): Route {
   return 'leaderboard'
 }
 
-function withQuery(changes: Record<string, string | null>) {
+function routeHref(path: string, changes: Record<string, string | null>) {
   const params = new URLSearchParams(window.location.search)
   Object.entries(changes).forEach(([key, value]) => {
     if (value) params.set(key, value)
     else params.delete(key)
   })
   const query = params.toString()
-  return `${window.location.pathname}${query ? `?${query}` : ''}`
+  return `${path}${query ? `?${query}` : ''}`
+}
+
+function withQuery(changes: Record<string, string | null>) {
+  return routeHref(window.location.pathname, changes)
 }
 
 function App() {
@@ -311,6 +315,18 @@ function Leaderboard({
   fixtureState: FixtureState
 }) {
   const [selected, setSelected] = useState<string[]>([])
+  const query = new URLSearchParams(window.location.search)
+  const availableScenarios = [...new Set(fixture.results.map(({ scenario }) => scenario))]
+  const requestedScenario = query.get('scenario')
+  const selectedScenario = availableScenarios.find((scenarioId) => scenarioId === requestedScenario) ??
+    availableScenarios[0] ?? 'baseline'
+  const results = fixture.results.filter(({ scenario }) => scenario === selectedScenario)
+  const selectedInScope = selected.filter((id) => results.some(({ agent_id }) => agent_id === id))
+  const compareHref = routeHref('/compare', {
+    agents: selectedInScope.join(','),
+    benchmark: fixture.benchmark?.benchmark_id ?? null,
+    scenario: selectedScenario,
+  })
   return (
     <>
       <PageHeading
@@ -330,17 +346,23 @@ function Leaderboard({
           <div className="section-toolbar">
             <div className="scenario-control">
               <label htmlFor="scenario">Scenario</label>
-              <select id="scenario" defaultValue={fixture.results[0].scenario}>
-                {scenarios.map((scenario) => (
-                  <option key={scenario.id} value={scenario.id}>{scenario.id}</option>
+              <select
+                id="scenario"
+                value={selectedScenario}
+                onChange={(event) => {
+                  window.location.href = withQuery({ scenario: event.target.value })
+                }}
+              >
+                {availableScenarios.map((scenarioId) => (
+                  <option key={scenarioId} value={scenarioId}>{scenarioId}</option>
                 ))}
               </select>
             </div>
-            <span>{fixture.results.length} agents · generated Jan 1, 2026</span>
+            <span>{results.length} agents · generated Jan 1, 2026</span>
           </div>
-          {selected.length > 1 && (
-            <a className="button button-secondary compare-action" href="/compare">
-              Compare {selected.length} agents
+          {selectedInScope.length > 1 && (
+            <a className="button button-secondary compare-action" href={compareHref}>
+              Compare {selectedInScope.length} agents
             </a>
           )}
           <div className="table-scroll leaderboard-table-region" role="region" aria-label="Leaderboard results" tabIndex={0}>
@@ -358,14 +380,16 @@ function Leaderboard({
                 </tr>
               </thead>
               <tbody>
-                {fixture.results.map((result) => (
+                {results.map((result) => (
                   <LeaderboardRow
                     key={result.agent_id}
                     result={result}
-                    selected={selected.includes(result.agent_id)}
+                    benchmarkId={fixture.benchmark?.benchmark_id ?? null}
+                    selected={selectedInScope.includes(result.agent_id)}
+                    selectionDisabled={!selectedInScope.includes(result.agent_id) && selectedInScope.length >= 3}
                     onSelect={(checked) => setSelected((current) =>
                       checked
-                        ? [...current, result.agent_id]
+                        ? current.includes(result.agent_id) ? current : [...current, result.agent_id]
                         : current.filter((id) => id !== result.agent_id),
                     )}
                   />
@@ -374,7 +398,7 @@ function Leaderboard({
             </table>
           </div>
           <div className="mobile-leaderboard" aria-label="Leaderboard results">
-            {fixture.results.map((result, index) => {
+            {results.map((result, index) => {
               const agent = agents.find(({ agent_id }) => agent_id === result.agent_id)
               return (
                 <article className="agent-summary" key={result.agent_id}>
@@ -383,16 +407,21 @@ function Leaderboard({
                       <input
                         aria-label={`Select ${agent?.name ?? result.agent_id} for comparison`}
                         type="checkbox"
-                        checked={selected.includes(result.agent_id)}
+                        checked={selectedInScope.includes(result.agent_id)}
+                        disabled={!selectedInScope.includes(result.agent_id) && selectedInScope.length >= 3}
                         onChange={(event) => setSelected((current) =>
                           event.target.checked
-                            ? [...current, result.agent_id]
+                            ? current.includes(result.agent_id) ? current : [...current, result.agent_id]
                             : current.filter((id) => id !== result.agent_id),
                         )}
                       />
                       <span className="agent-rank">{index + 1}</span>
                       <span>
-                        <a href={`/runs?agent=${result.agent_id}`}>{agent?.name ?? result.agent_id}</a>
+                        <a href={routeHref('/runs', {
+                          agent: result.agent_id,
+                          scenario: result.scenario,
+                          benchmark: fixture.benchmark?.benchmark_id ?? null,
+                        })}>{agent?.name ?? result.agent_id}</a>
                         <span className="cell-detail mono">{result.agent_id}</span>
                       </span>
                     </label>
@@ -432,11 +461,15 @@ function Leaderboard({
 
 function LeaderboardRow({
   result,
+  benchmarkId,
   selected,
+  selectionDisabled,
   onSelect,
 }: {
   result: ResultRow
+  benchmarkId: string | null
   selected: boolean
+  selectionDisabled: boolean
   onSelect: (checked: boolean) => void
 }) {
   const agent = agents.find(({ agent_id }) => agent_id === result.agent_id)
@@ -447,11 +480,17 @@ function LeaderboardRow({
           aria-label={`Select ${agent?.name ?? result.agent_id} for comparison`}
           type="checkbox"
           checked={selected}
+          disabled={selectionDisabled}
           onChange={(event) => onSelect(event.target.checked)}
         />
       </td>
       <th scope="row">
-        <a className="agent-link" href={`/runs?agent=${result.agent_id}`}>
+        <a className="agent-link" href={routeHref('/runs', {
+          agent: result.agent_id,
+          task: result.task_id,
+          scenario: result.scenario,
+          benchmark: benchmarkId,
+        })}>
           {agent?.name ?? result.agent_id}
           <span className="mono">{result.agent_id}</span>
         </a>
@@ -507,11 +546,14 @@ function Benchmarks({
                 <th scope="col">Progress</th>
                 <th scope="col">Spend / cap</th>
                 <th scope="col">Created</th>
+                <th scope="col">Runs</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th scope="row"><a href="/">{benchmark.name}</a></th>
+                <th scope="row">
+                  <a href={routeHref('/', { benchmark: benchmark.benchmark_id })}>{benchmark.name}</a>
+                </th>
                 <td><StateBadge state={benchmark.state} /></td>
                 <td>
                   <span>{benchmark.progress.done} / {benchmark.progress.total} done</span>
@@ -521,11 +563,20 @@ function Benchmarks({
                     max={Math.max(benchmark.progress.total, 1)}
                   />
                   <span className="cell-detail">
+                    {benchmark.progress.running} running · {benchmark.progress.queued} queued
+                  </span>
+                  <span className="cell-detail">
                     {benchmark.progress.infra_error} INFRA · {benchmark.progress.excluded} excluded
                   </span>
                 </td>
-                <td>{formatMoney(benchmark.spend_usd)} / {formatMoney(benchmark.config.spend_cap_usd)}</td>
+                <td className="num">
+                  <strong>{formatMoney(benchmark.spend_usd)}</strong>
+                  <span className="cell-detail">of {formatMoney(benchmark.config.spend_cap_usd)}</span>
+                </td>
                 <td>{new Date(benchmark.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                <td>
+                  <a href={routeHref('/runs', { benchmark: benchmark.benchmark_id })}>View runs</a>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -543,11 +594,65 @@ function NewBenchmark({
   fixtureState: FixtureState
 }) {
   const [message, setMessage] = useState('')
+  const [name, setName] = useState('Python repair · baseline')
+  const [selectedAgentIds, setSelectedAgentIds] = useState(
+    fixture.catalog.agents.map(({ agent_id }) => agent_id),
+  )
+  const [selectedTaskIds, setSelectedTaskIds] = useState(
+    fixture.catalog.tasks.filter(({ validated }) => validated).map(({ task_id }) => task_id),
+  )
+  const [selectedScenarioIds, setSelectedScenarioIds] = useState(['baseline'])
+  const [runsPerCombination, setRunsPerCombination] = useState('3')
+  const [spendCap, setSpendCap] = useState('5.00')
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const catalogAgents = fixture.catalog.agents
   const catalogTasks = fixture.catalog.tasks
+  const selectedTasks = catalogTasks.filter(({ task_id }) => selectedTaskIds.includes(task_id))
+  const scenarioAllowed = (scenarioId: string, taskIds = selectedTaskIds) =>
+    scenarioId === 'baseline' ||
+    (taskIds.length > 0 &&
+      catalogTasks
+        .filter(({ task_id }) => taskIds.includes(task_id))
+        .every(({ faults_allowed }) => faults_allowed.includes(scenarioId)))
+
+  function clearFeedback(...fields: string[]) {
+    setErrors((current) => {
+      const next = { ...current }
+      fields.forEach((field) => delete next[field])
+      return next
+    })
+    setMessage('')
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setMessage('Mock preview only. No benchmark was launched; live API wiring is not available yet.')
+    const nextErrors: Record<string, string> = {}
+    const runCount = Number(runsPerCombination)
+    const cap = Number(spendCap)
+    if (!name.trim()) nextErrors.name = 'Enter a benchmark name.'
+    if (selectedAgentIds.length === 0) nextErrors.agents = 'Select at least one agent.'
+    if (selectedTaskIds.length === 0) nextErrors.tasks = 'Select at least one validated task.'
+    if (selectedTasks.some(({ validated }) => !validated)) {
+      nextErrors.tasks = 'Every selected task must be validated.'
+    }
+    if (selectedScenarioIds.length === 0) nextErrors.scenarios = 'Select at least one scenario.'
+    if (selectedScenarioIds.some((scenarioId) => !scenarioAllowed(scenarioId))) {
+      nextErrors.scenarios = 'Each scenario must be allowed by every selected task.'
+    }
+    if (!Number.isInteger(runCount) || runCount < 1 || runCount > 10) {
+      nextErrors.runs = 'Enter a whole number from 1 to 10.'
+    }
+    if (!Number.isFinite(cap) || cap <= 0) {
+      nextErrors.spend = 'Enter a spend cap greater than $0.'
+    }
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) {
+      setMessage('')
+      return
+    }
+    const slots = selectedAgentIds.length * selectedTaskIds.length *
+      selectedScenarioIds.length * runCount
+    setMessage(`Mock preview ready: ${slots} run slots. No benchmark was queued.`)
   }
   return (
     <>
@@ -560,40 +665,150 @@ function NewBenchmark({
           action={<a className="button button-secondary" href="/catalog">Open catalog</a>}
         />
       ) : (
-        <form className="launch-form" onSubmit={submit}>
-          <label>
+        <form className="launch-form" noValidate onSubmit={submit}>
+          <label htmlFor="benchmark-name">
             Benchmark name
-            <input required maxLength={80} defaultValue="Python repair · baseline" />
+            <input
+              id="benchmark-name"
+              maxLength={80}
+              value={name}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'benchmark-name-error' : undefined}
+              onChange={(event) => {
+                setName(event.target.value)
+                clearFeedback('name')
+              }}
+            />
+            {errors.name && <span id="benchmark-name-error" className="form-error">{errors.name}</span>}
           </label>
-          <label>
-            Agents
-            <select multiple defaultValue={catalogAgents.map(({ agent_id }) => agent_id)} size={catalogAgents.length}>
+          <fieldset>
+            <legend>Agents</legend>
+            <select
+              aria-label="Agents"
+              multiple
+              value={selectedAgentIds}
+              size={Math.min(catalogAgents.length, 4)}
+              aria-invalid={Boolean(errors.agents)}
+              aria-describedby={errors.agents ? 'benchmark-agents-error' : undefined}
+              onChange={(event) => {
+                setSelectedAgentIds(
+                  Array.from(event.currentTarget.selectedOptions, ({ value }) => value),
+                )
+                clearFeedback('agents')
+              }}
+            >
               {catalogAgents.map((agent) => <option key={agent.agent_id} value={agent.agent_id}>{agent.name}</option>)}
             </select>
-          </label>
-          <label>
-            Tasks
-            <select multiple defaultValue={catalogTasks.map(({ task_id }) => task_id)} size={catalogTasks.length}>
-              {catalogTasks.map((task) => <option key={task.task_id} value={task.task_id}>{task.task_id}</option>)}
+            {errors.agents && <span id="benchmark-agents-error" className="form-error">{errors.agents}</span>}
+          </fieldset>
+          <fieldset>
+            <legend>Tasks</legend>
+            <select
+              aria-label="Tasks"
+              multiple
+              value={selectedTaskIds}
+              size={Math.min(catalogTasks.length, 4)}
+              aria-invalid={Boolean(errors.tasks)}
+              aria-describedby={errors.tasks ? 'benchmark-tasks-error' : undefined}
+              onChange={(event) => {
+                const nextTaskIds = Array.from(
+                  event.currentTarget.selectedOptions,
+                  ({ value }) => value,
+                )
+                setSelectedTaskIds(nextTaskIds)
+                clearFeedback('tasks', 'scenarios')
+                setSelectedScenarioIds((current) =>
+                  current.filter((scenarioId) => scenarioAllowed(scenarioId, nextTaskIds)),
+                )
+              }}
+            >
+              {catalogTasks.map((task) => (
+                <option key={task.task_id} value={task.task_id} disabled={!task.validated}>
+                  {task.task_id}{task.validated ? '' : ' (not validated)'}
+                </option>
+              ))}
             </select>
-          </label>
-          <label>
-            Scenarios
-            <select multiple defaultValue={['baseline']} size={scenarios.length}>
-              {scenarios.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.id}</option>)}
+            {errors.tasks && <span id="benchmark-tasks-error" className="form-error">{errors.tasks}</span>}
+          </fieldset>
+          <fieldset>
+            <legend>Scenarios</legend>
+            <select
+              aria-label="Scenarios"
+              multiple
+              value={selectedScenarioIds}
+              size={Math.min(scenarios.length, 4)}
+              aria-invalid={Boolean(errors.scenarios)}
+              aria-describedby={errors.scenarios ? 'benchmark-scenarios-error' : undefined}
+              onChange={(event) => {
+                setSelectedScenarioIds(
+                  Array.from(event.currentTarget.selectedOptions, ({ value }) => value),
+                )
+                clearFeedback('scenarios')
+              }}
+            >
+              {scenarios.map((scenario) => {
+                const allowed = scenarioAllowed(scenario.id)
+                return (
+                  <option key={scenario.id} value={scenario.id} disabled={!allowed}>
+                    {scenario.id}{allowed ? '' : ' (disallowed)'}
+                  </option>
+                )
+              })}
             </select>
-          </label>
+            {scenarios.some(({ id }) => !scenarioAllowed(id)) && (
+              <p className="field-hint">Fault scenarios are disabled until every selected task allows them.</p>
+            )}
+            {errors.scenarios && <span id="benchmark-scenarios-error" className="form-error">{errors.scenarios}</span>}
+          </fieldset>
           <div className="form-pair">
-            <label>
+            <label htmlFor="runs-per-combination">
               Runs per combination
-              <input type="number" min="1" max="10" defaultValue="3" />
+              <input
+                id="runs-per-combination"
+                type="number"
+                min="1"
+                max="10"
+                step="1"
+                value={runsPerCombination}
+                aria-invalid={Boolean(errors.runs)}
+                aria-describedby={errors.runs ? 'runs-error' : undefined}
+                onChange={(event) => {
+                  setRunsPerCombination(event.target.value)
+                  clearFeedback('runs')
+                }}
+              />
+              {errors.runs && <span id="runs-error" className="form-error">{errors.runs}</span>}
             </label>
-            <label>
+            <label htmlFor="spend-cap">
               Spend cap (USD)
-              <input type="number" min="0.01" step="0.01" required defaultValue="5.00" />
+              <input
+                id="spend-cap"
+                type="number"
+                min="0"
+                step="any"
+                value={spendCap}
+                aria-invalid={Boolean(errors.spend)}
+                aria-describedby={errors.spend ? 'spend-error' : undefined}
+                onChange={(event) => {
+                  setSpendCap(event.target.value)
+                  clearFeedback('spend')
+                }}
+              />
+              {errors.spend && <span id="spend-error" className="form-error">{errors.spend}</span>}
             </label>
           </div>
+          <div className="launch-preview">
+            <strong>Mock preview</strong>
+            <span>
+              {selectedAgentIds.length * selectedTaskIds.length * selectedScenarioIds.length *
+                (Number(runsPerCombination) || 0)} planned run slots
+            </span>
+            <span>No benchmark will be queued by this preview.</span>
+          </div>
           <button className="button button-primary" type="submit">Preview launch</button>
+          {Object.keys(errors).length > 0 && (
+            <p className="form-error-summary" role="alert">Correct the highlighted fields before previewing.</p>
+          )}
           {message && <p className="notice notice-info" role="status">{message}</p>}
         </form>
       )}
@@ -608,52 +823,278 @@ function Compare({
   fixture: DashboardFixture
   fixtureState: FixtureState
 }) {
-  const first = fixture.results[0]
-  const second = fixture.results[1]
+  const taskResults = fixture.compareResults
+  const pooledResults = fixture.results
+  const availableScenarios = [...new Set(
+    [...pooledResults, ...taskResults].map(({ scenario }) => scenario),
+  )]
+  const query = new URLSearchParams(window.location.search)
+  const requestedScenario = query.get('scenario')
+  const [scenario, setScenario] = useState(
+    availableScenarios.find((scenarioId) => scenarioId === requestedScenario) ??
+      availableScenarios[0] ?? 'baseline',
+  )
+  const scenarioResults = taskResults.filter((row) => row.scenario === scenario)
+  const pooledScenarioResults = pooledResults.filter((row) => row.scenario === scenario)
+  const availableAgentIds = [...new Set(scenarioResults.map(({ agent_id }) => agent_id))]
+  const requestedAgentIds = (query.get('agents') ?? '')
+    .split(',')
+    .filter((agentId, index, values) => agentId && values.indexOf(agentId) === index)
+  const [selectedAgentIds, setSelectedAgentIds] = useState(() => {
+    const requested = requestedAgentIds.filter((agentId) => availableAgentIds.includes(agentId))
+    return requested.length >= 2 ? requested.slice(0, 3) : availableAgentIds.slice(0, 2)
+  })
+  const selectedRows = selectedAgentIds
+    .map((agentId) => pooledScenarioResults.find(({ agent_id }) => agent_id === agentId))
+    .filter((row): row is ResultRow => row !== undefined)
+  const taskIds = [...new Set(scenarioResults.flatMap((row) =>
+    selectedAgentIds.includes(row.agent_id) && row.task_id ? [row.task_id] : [],
+  ))]
+  const comparisonRows = [
+    { key: 'all', label: 'All tasks', rows: selectedRows },
+    ...taskIds.map((taskId) => ({
+      key: taskId,
+      label: taskId,
+      rows: scenarioResults.filter(
+        (row) => row.task_id === taskId && selectedAgentIds.includes(row.agent_id),
+      ),
+    })),
+  ]
+
   return (
     <>
       <PageHeading title="Compare agents" description="Compare outcomes on the same task and scenario." />
       <FixtureNotice fixture={fixture} state={fixtureState} />
-      {first && second ? (
-        <div className="table-scroll" role="region" aria-label="Agent comparison" tabIndex={0}>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Task</th>
-                {[first, second].map((row) => (
-                  <th scope="col" key={row.agent_id}>
-                    {agents.find(({ agent_id }) => agent_id === row.agent_id)?.name ?? row.agent_id}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">All tasks</th>
-                {[first, second].map((row) => (
-                  <td key={row.agent_id}>
-                    <strong>{formatRate(row.pass_rate.value)}</strong>
-                    <span className="cell-detail">{formatInterval(row.pass_rate.ci_low, row.pass_rate.ci_high)} · {row.pass_rate.passed}/{row.pass_rate.n}</span>
-                    <span className="cell-detail">{formatMoney(row.cost.mean)} · {formatStat(row.steps.mean)} steps · {formatStat(row.duration.mean)} s</span>
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <th scope="row">Difference</th>
-                <td colSpan={2}><span className="status-pill status-neutral">No clear difference</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className="compare-controls">
+        <label className="scenario-control" htmlFor="compare-scenario">
+          Scenario
+          <select
+            id="compare-scenario"
+            value={scenario}
+            disabled={availableScenarios.length < 2}
+            onChange={(event) => {
+              const nextScenario = event.target.value
+              const nextRows = taskResults.filter((row) => row.scenario === nextScenario)
+              const nextAgentIds = [...new Set(nextRows.map(({ agent_id }) => agent_id))]
+              const retained = selectedAgentIds.filter((agentId) => nextAgentIds.includes(agentId))
+              const nextSelectedAgentIds = retained.length >= 2
+                ? retained.slice(0, 3)
+                : nextAgentIds.slice(0, 2)
+              setScenario(nextScenario)
+              setSelectedAgentIds(nextSelectedAgentIds)
+              window.history.replaceState(null, '', routeHref('/compare', {
+                scenario: nextScenario,
+                agents: nextSelectedAgentIds.join(','),
+              }))
+            }}
+          >
+            {availableScenarios.map((scenarioId) => (
+              <option key={scenarioId} value={scenarioId}>{scenarioId}</option>
+            ))}
+          </select>
+        </label>
+        <fieldset className="compare-agent-picker">
+          <legend>Agents to compare (choose 2–3)</legend>
+          {availableAgentIds.map((agentId) => {
+            const checked = selectedAgentIds.includes(agentId)
+            const agentName = agents.find(({ agent_id }) => agent_id === agentId)?.name ?? agentId
+            return (
+              <label key={agentId}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={!checked && selectedAgentIds.length >= 3}
+                  onChange={(event) => {
+                    const nextSelectedAgentIds = event.target.checked
+                      ? [...selectedAgentIds, agentId]
+                      : selectedAgentIds.filter((id) => id !== agentId)
+                    setSelectedAgentIds(nextSelectedAgentIds)
+                    window.history.replaceState(null, '', routeHref('/compare', {
+                      agents: nextSelectedAgentIds.join(','),
+                      scenario,
+                    }))
+                  }}
+                />
+                {agentName}
+              </label>
+            )
+          })}
+        </fieldset>
+      </div>
+      {selectedAgentIds.length >= 2 ? (
+        <>
+          <div className="table-scroll" role="region" aria-label="Agent comparison" tabIndex={0}>
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th scope="col">Task</th>
+                  {selectedAgentIds.map((agentId, index) => (
+                    <th
+                      scope="col"
+                      key={agentId}
+                      className={index === 2 ? 'compare-third-column' : undefined}
+                    >
+                      {agents.find(({ agent_id }) => agent_id === agentId)?.name ?? agentId}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map(({ key, label, rows }) => {
+                  const winner = clearWinner(rows, selectedAgentIds.length)
+                  return (
+                    <ComparisonRows
+                      key={key}
+                      label={label}
+                      rows={rows}
+                      selectedAgentIds={selectedAgentIds}
+                      winner={winner}
+                      scenario={scenario}
+                      benchmarkId={fixture.benchmark?.benchmark_id ?? null}
+                    />
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          {selectedAgentIds.length === 3 && (
+            <section className="third-agent-stack" aria-label="Third agent comparison">
+              <h2>
+                {agents.find(({ agent_id }) => agent_id === selectedAgentIds[2])?.name ??
+                  selectedAgentIds[2]}
+              </h2>
+              {comparisonRows.map(({ key, label, rows }) => {
+                const row = rows.find(({ agent_id }) => agent_id === selectedAgentIds[2])
+                const winner = clearWinner(rows, selectedAgentIds.length)
+                return (
+                  <div className="third-agent-row" key={key}>
+                    <strong>{label}</strong>
+                    {row ? (
+                      <>
+                        <span>
+                          {formatRate(row.pass_rate.value)} · {formatInterval(row.pass_rate.ci_low, row.pass_rate.ci_high)}
+                        </span>
+                        <span>
+                          {formatMoney(row.cost.mean)} · {formatStat(row.steps.mean)} steps · {formatStat(row.duration.mean)} s
+                        </span>
+                        <a href={routeHref('/runs', {
+                          agent: row.agent_id,
+                          task: row.task_id,
+                          scenario,
+                          benchmark: fixture.benchmark?.benchmark_id ?? null,
+                          agents: null,
+                        })}>View runs</a>
+                      </>
+                    ) : <span className="cell-detail">No result</span>}
+                    <span className="cell-detail">
+                      {winner
+                        ? `${agents.find(({ agent_id }) => agent_id === winner)?.name ?? winner} leads`
+                        : 'No clear difference'}
+                    </span>
+                  </div>
+                )
+              })}
+            </section>
+          )}
+        </>
       ) : (
         <EmptyState
-          title="Select two agents to compare"
-          message="The selected fixture has fewer than two result rows."
+          title={availableAgentIds.length < 2 ? 'Not enough agents to compare' : 'Select two agents to compare'}
+          message={availableAgentIds.length < 2
+            ? 'Choose a fixture with results for at least two agents.'
+            : 'Select two or three agents to compare their outcomes.'}
           action={<a className="button button-secondary" href="/">View leaderboard</a>}
         />
       )}
     </>
   )
+}
+
+function ComparisonRows({
+  label,
+  rows,
+  selectedAgentIds,
+  winner,
+  scenario,
+  benchmarkId,
+}: {
+  label: string
+  rows: ResultRow[]
+  selectedAgentIds: string[]
+  winner: string | null
+  scenario: string
+  benchmarkId: string | null
+}) {
+  const winnerName = winner
+    ? agents.find(({ agent_id }) => agent_id === winner)?.name ?? winner
+    : null
+  return (
+    <>
+      <tr>
+        <th scope="row">{label}</th>
+        {selectedAgentIds.map((agentId, index) => {
+          const row = rows.find(({ agent_id }) => agent_id === agentId)
+          return (
+            <td
+              key={agentId}
+              className={[
+                winner === agentId ? 'compare-winner' : '',
+                index === 2 ? 'compare-third-column' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              {row ? (
+                <>
+                  <strong>{formatRate(row.pass_rate.value)}</strong>
+                  <span className="cell-detail">
+                    {formatInterval(row.pass_rate.ci_low, row.pass_rate.ci_high)} · {row.pass_rate.passed}/{row.pass_rate.n}
+                  </span>
+                  <span className="cell-detail">
+                    {formatMoney(row.cost.mean)} · {formatStat(row.steps.mean)} steps · {formatStat(row.duration.mean)} s
+                  </span>
+                  <a className="cell-run-link" href={routeHref('/runs', {
+                    agent: row.agent_id,
+                    task: row.task_id,
+                    scenario,
+                    benchmark: benchmarkId,
+                    agents: null,
+                  })}>View runs</a>
+                </>
+              ) : <span className="cell-detail">No result</span>}
+            </td>
+          )
+        })}
+      </tr>
+      <tr className="comparison-outcome">
+        <th scope="row">Difference</th>
+        <td colSpan={selectedAgentIds.length}>
+          {winnerName
+            ? `${winnerName} leads; its 95% interval does not overlap the others.`
+            : 'No clear difference: the 95% intervals overlap or results are missing.'}
+        </td>
+      </tr>
+    </>
+  )
+}
+
+function clearWinner(rows: ResultRow[], expectedCount: number): string | null {
+  if (
+    rows.length !== expectedCount ||
+    rows.some((row) =>
+      row.pass_rate.value === null ||
+      row.pass_rate.ci_low === null ||
+      row.pass_rate.ci_high === null,
+    )
+  ) return null
+  const ranked = [...rows].sort(
+    (first, second) => (second.pass_rate.value ?? 0) - (first.pass_rate.value ?? 0),
+  )
+  const top = ranked[0]
+  const topIntervalLow = top.pass_rate.ci_low
+  if (topIntervalLow === null) return null
+  const hasSeparatedInterval = ranked
+    .slice(1)
+    .every((row) => row.pass_rate.ci_high !== null && topIntervalLow > row.pass_rate.ci_high)
+  return hasSeparatedInterval ? top.agent_id : null
 }
 
 function RunList({
@@ -663,13 +1104,42 @@ function RunList({
   fixture: DashboardFixture
   fixtureState: FixtureState
 }) {
+  const query = new URLSearchParams(window.location.search)
+  const filters = {
+    agent: query.get('agent'),
+    task: query.get('task'),
+    scenario: query.get('scenario'),
+    status: query.get('status'),
+    benchmark: query.get('benchmark'),
+  }
+  const activeFilters = Object.entries(filters).filter(([, value]) => value)
+  const runs = fixture.runs.filter((run) =>
+    (!filters.agent || run.agent_id === filters.agent) &&
+    (!filters.task || run.task_id === filters.task) &&
+    (!filters.scenario || run.scenario === filters.scenario) &&
+    (!filters.status || run.status === filters.status) &&
+    (!filters.benchmark || run.benchmark_id === filters.benchmark),
+  )
   return (
     <>
       <PageHeading title="Runs" description="Run records for the selected benchmark and filters." />
       <FixtureNotice fixture={fixture} state={fixtureState} />
-      {fixture.runs.length ? (
+      {activeFilters.length > 0 && (
+        <p className="run-filter-summary">
+          {runs.length} matching runs · {activeFilters.map(([key, value]) => `${key}: ${value}`).join(' · ')}
+          {' '}<a href={routeHref('/runs', {
+            agent: null,
+            task: null,
+            scenario: null,
+            status: null,
+            benchmark: null,
+            agents: null,
+          })}>Clear filters</a>
+        </p>
+      )}
+      {runs.length ? (
         <div className="run-list">
-          {fixture.runs.map((run) => (
+          {runs.map((run) => (
             <a className="run-row" key={run.run_id} href={`/runs/${run.run_id}`}>
               <span>
                 <strong>{agents.find(({ agent_id }) => agent_id === run.agent_id)?.name ?? run.agent_id}</strong>
@@ -681,7 +1151,20 @@ function RunList({
           ))}
         </div>
       ) : (
-        <EmptyState title="No runs match these filters" message="Choose another fixture state or clear the run filters." />
+        <EmptyState
+          title="No runs match these filters"
+          message="Choose another fixture state or clear the run filters."
+          action={activeFilters.length > 0
+            ? <a className="button button-secondary" href={routeHref('/runs', {
+                agent: null,
+                task: null,
+                scenario: null,
+                status: null,
+                benchmark: null,
+                agents: null,
+              })}>Clear filters</a>
+            : undefined}
+        />
       )}
     </>
   )
