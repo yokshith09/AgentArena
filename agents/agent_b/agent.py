@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -23,9 +23,8 @@ from agents import (
 )
 
 MAX_TURNS = 12
-MAX_TOOL_OUTPUT = 12_000
 REQUEST_TIMEOUT_SECONDS = 30
-TEST_TIMEOUT_SECONDS = 60
+AGENT_ROLE = "agent-b-openai-agents"
 
 SYSTEM_PROMPT = """\
 You are Agent B, a coding agent working only in the supplied task workspace.
@@ -39,10 +38,6 @@ class AgentError(Exception):
     """Raised when required environment or final output is invalid."""
 
 
-class ToolError(Exception):
-    """Raised when a workspace tool receives invalid input or cannot complete."""
-
-
 def _required_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
@@ -50,108 +45,50 @@ def _required_env(name: str) -> str:
     return value
 
 
-def _workspace_file(workspace: Path, relative_path: str) -> Path:
-    if not relative_path or "\x00" in relative_path or Path(relative_path).is_absolute():
-        raise ToolError("path must be a non-empty relative path inside the workspace")
-
-    root = workspace.resolve()
-    try:
-        target = (root / relative_path).resolve()
-        target.relative_to(root)
-    except (OSError, RuntimeError, ValueError) as error:
-        raise ToolError("path must resolve inside the workspace") from error
-    if target == root:
-        raise ToolError("path must name a file inside the workspace")
-    return target
+def _load_shared_tools() -> Any:
+    module_name = f"agentarena_{Path(__file__).parent.name}_tools"
+    module_path = Path(__file__).resolve().parents[1] / "common" / "tools.py"
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"could not load shared tools from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-def _read_file(workspace: Path, relative_path: str) -> str:
-    target = _workspace_file(workspace, relative_path)
-    try:
-        content = target.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise ToolError(f"could not read {relative_path}: {error}") from error
-    if len(content) > MAX_TOOL_OUTPUT:
-        return content[:MAX_TOOL_OUTPUT] + "\n[truncated]"
-    return content
+SHARED_TOOLS = _load_shared_tools()
 
 
-def _write_file(workspace: Path, relative_path: str, content: str) -> dict[str, Any]:
-    target = _workspace_file(workspace, relative_path)
-    try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise ToolError(f"could not write {relative_path}: {error}") from error
-    return {"ok": True, "path": relative_path}
-
-
-def _text_output(value: str | bytes | None) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    return value
-
-
-def _run_tests(workspace: Path) -> dict[str, Any]:
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=TEST_TIMEOUT_SECONDS,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as error:
-        return {
-            "ok": False,
-            "timed_out": True,
-            "timeout_seconds": TEST_TIMEOUT_SECONDS,
-            "stdout": _text_output(error.stdout)[:MAX_TOOL_OUTPUT],
-            "stderr": _text_output(error.stderr)[:MAX_TOOL_OUTPUT],
-        }
-    except OSError as error:
-        return {"ok": False, "error": f"could not start pytest: {error}"}
-
-    return {
-        "ok": result.returncode == 0,
-        "timed_out": False,
-        "exit_code": result.returncode,
-        "stdout": result.stdout[:MAX_TOOL_OUTPUT],
-        "stderr": result.stderr[:MAX_TOOL_OUTPUT],
-    }
-
-
-def _tool_error(error: ToolError) -> str:
+def _tool_error(error: Exception) -> str:
     return json.dumps({"ok": False, "error": str(error)})
 
 
-@tool
-def read_file(path: str) -> str:
-    """Read a UTF-8 file from the task workspace."""
-    try:
-        return _read_file(Path(_required_env("WORKSPACE")), path)
-    except ToolError as error:
-        return _tool_error(error)
+def _create_tools(workspace: Path, fault: Any) -> list[Any]:
+    @tool
+    def read_file(path: str) -> str:
+        """Read a UTF-8 file from the task workspace."""
+        try:
+            return SHARED_TOOLS.read_file(workspace, path)
+        except SHARED_TOOLS.ToolError as error:
+            return _tool_error(error)
 
+    @tool
+    def write_file(path: str, content: str) -> str:
+        """Write a UTF-8 file inside the task workspace."""
+        try:
+            result = SHARED_TOOLS.write_file(workspace, path, content)
+        except SHARED_TOOLS.ToolError as error:
+            return _tool_error(error)
+        return json.dumps(result)
 
-@tool
-def write_file(path: str, content: str) -> str:
-    """Write a UTF-8 file inside the task workspace."""
-    try:
-        result = _write_file(Path(_required_env("WORKSPACE")), path, content)
-    except ToolError as error:
-        return _tool_error(error)
-    return json.dumps(result)
+    @tool
+    def run_tests() -> str:
+        """Run pytest in the task workspace and return its result."""
+        result = SHARED_TOOLS.run_tests(workspace, fault)
+        return json.dumps(result)
 
-
-@tool
-def run_tests() -> str:
-    """Run pytest in the task workspace and return its result."""
-    result = _run_tests(Path(_required_env("WORKSPACE")))
-    return json.dumps(result)
+    return [read_file, write_file, run_tests]
 
 
 async def run_agent() -> int:
@@ -167,24 +104,28 @@ async def run_agent() -> int:
     run_id = _required_env("RUN_ID")
     api_key = _required_env("OPENAI_API_KEY")
     model_name = _required_env("ARENA_MODEL")
+    try:
+        tool_fault = SHARED_TOOLS.load_tool_fault(os.environ.get("ARENA_TOOL_FAULT", ""))
+    except SHARED_TOOLS.ToolError as error:
+        raise AgentError(str(error)) from error
     set_tracing_disabled(disabled=True)
 
     async with AsyncOpenAI(
         api_key=api_key,
         base_url=base_url.rstrip("/") + "/",
         default_headers={
-            "X-Agent-Role": "agent-b-openai-agents",
-            "User-Agent": f"AgentArena/agent-b-openai-agents ({run_id})",
+            "X-Agent-Role": AGENT_ROLE,
+            "User-Agent": f"AgentArena/{AGENT_ROLE} ({run_id})",
         },
         max_retries=0,
         timeout=REQUEST_TIMEOUT_SECONDS,
     ) as client:
         model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
         agent = Agent(
-            name="agent-b-openai-agents",
+            name=AGENT_ROLE,
             instructions=SYSTEM_PROMPT,
             model=model,
-            tools=[read_file, write_file, run_tests],
+            tools=_create_tools(workspace, tool_fault),
         )
         result = await Runner.run(agent, task_prompt, max_turns=MAX_TURNS)
 

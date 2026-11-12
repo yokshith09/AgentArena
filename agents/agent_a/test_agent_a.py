@@ -20,9 +20,9 @@ if agent_spec is None or agent_spec.loader is None:
 agent_module = importlib.util.module_from_spec(agent_spec)
 sys.modules[agent_spec.name] = agent_module
 agent_spec.loader.exec_module(agent_module)
-ToolError = agent_module.ToolError
-_workspace_file = agent_module._workspace_file
-run_tests = agent_module.run_tests
+ToolError = agent_module.SHARED_TOOLS.ToolError
+_workspace_file = agent_module.SHARED_TOOLS.workspace_file
+run_tests = agent_module.SHARED_TOOLS.run_tests
 
 
 class AgentATests(unittest.TestCase):
@@ -75,6 +75,7 @@ class AgentATests(unittest.TestCase):
             "RUN_ID": "00000000-0000-4000-8000-000000000001",
             "OPENAI_API_KEY": "test-key",
             "ARENA_MODEL": "mock-model",
+            "ARENA_TOOL_FAULT": "",
         })
 
     def tearDown(self) -> None:

@@ -20,9 +20,9 @@ if agent_spec is None or agent_spec.loader is None:
 agent_module = importlib.util.module_from_spec(agent_spec)
 sys.modules[agent_spec.name] = agent_module
 agent_spec.loader.exec_module(agent_module)
-ToolError = agent_module.ToolError
-_run_tests = agent_module._run_tests
-_workspace_file = agent_module._workspace_file
+ToolError = agent_module.SHARED_TOOLS.ToolError
+_run_tests = agent_module.SHARED_TOOLS.run_tests
+_workspace_file = agent_module.SHARED_TOOLS.workspace_file
 
 
 class AgentBTests(unittest.TestCase):
@@ -83,6 +83,7 @@ class AgentBTests(unittest.TestCase):
             "RUN_ID": "00000000-0000-4000-8000-000000000002",
             "OPENAI_API_KEY": "test-key",
             "ARENA_MODEL": "mock-model",
+            "ARENA_TOOL_FAULT": "",
         })
 
     def tearDown(self) -> None:
@@ -127,6 +128,39 @@ class AgentBTests(unittest.TestCase):
         self.assertIn("503", result.stderr)
         self.assertEqual(server.STATE["fail"]["n"], 0)
         self.assertEqual(server.STATE["i"], 0)
+
+    def test_shared_tool_fault_fails_first_two_test_calls(self) -> None:
+        server.STATE.update(
+            i=0,
+            script={
+                "responses": [
+                    {"tool_calls": [{"name": "run_tests", "arguments": "{}"}]},
+                    {"tool_calls": [{"name": "run_tests", "arguments": "{}"}]},
+                    {"tool_calls": [{"name": "run_tests", "arguments": "{}"}]},
+                    {"text": "Completed after the injected test failures."},
+                ],
+            },
+        )
+        environment = self.environment.copy()
+        environment["ARENA_TOOL_FAULT"] = json.dumps({
+            "tool": "run_tests",
+            "fail_first_n": 2,
+            "message": "injected test failure",
+        })
+        agent_path = Path(__file__).with_name("agent.py")
+        result = subprocess.run(
+            [sys.executable, str(agent_path)],
+            cwd=agent_path.parent,
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Completed after the injected test failures", result.stdout)
+        self.assertEqual(server.STATE["i"], 4)
 
     def test_run_tests_executes_pytest_in_the_workspace(self) -> None:
         result = _run_tests(self.workspace)

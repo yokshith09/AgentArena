@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,9 +12,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 MAX_TURNS = 12
-MAX_TOOL_OUTPUT = 12_000
 REQUEST_TIMEOUT_SECONDS = 30
-TEST_TIMEOUT_SECONDS = 60
+AGENT_ROLE = "agent-a-plain"
 
 SYSTEM_PROMPT = """\
 You are Agent A, a coding agent working only in the supplied task workspace.
@@ -72,8 +71,19 @@ class AgentError(Exception):
     """Raised when the agent cannot continue safely or communicate with the model."""
 
 
-class ToolError(Exception):
-    """Raised when a workspace tool receives invalid input or cannot complete."""
+def _load_shared_tools() -> Any:
+    module_name = f"agentarena_{Path(__file__).parent.name}_tools"
+    module_path = Path(__file__).resolve().parents[1] / "common" / "tools.py"
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"could not load shared tools from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+SHARED_TOOLS = _load_shared_tools()
 
 
 def _required_env(name: str) -> str:
@@ -83,109 +93,13 @@ def _required_env(name: str) -> str:
     return value
 
 
-def _workspace_file(workspace: Path, relative_path: str) -> Path:
-    if not relative_path or "\x00" in relative_path or Path(relative_path).is_absolute():
-        raise ToolError("path must be a non-empty relative path inside the workspace")
-
-    root = workspace.resolve()
-    target = (root / relative_path).resolve()
-    try:
-        target.relative_to(root)
-    except ValueError as error:
-        raise ToolError("path must stay inside the workspace") from error
-    if target == root:
-        raise ToolError("path must name a file inside the workspace")
-    return target
-
-
-def read_file(workspace: Path, relative_path: str) -> str:
-    target = _workspace_file(workspace, relative_path)
-    try:
-        content = target.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise ToolError(f"could not read {relative_path}: {error}") from error
-    if len(content) > MAX_TOOL_OUTPUT:
-        return content[:MAX_TOOL_OUTPUT] + "\n[truncated]"
-    return content
-
-
-def write_file(workspace: Path, relative_path: str, content: str) -> dict[str, Any]:
-    target = _workspace_file(workspace, relative_path)
-    try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise ToolError(f"could not write {relative_path}: {error}") from error
-    return {"ok": True, "path": relative_path}
-
-
-def _text_output(value: str | bytes | None) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    return value
-
-
-def run_tests(workspace: Path) -> dict[str, Any]:
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=TEST_TIMEOUT_SECONDS,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as error:
-        return {
-            "ok": False,
-            "timed_out": True,
-            "timeout_seconds": TEST_TIMEOUT_SECONDS,
-            "stdout": _text_output(error.stdout)[:MAX_TOOL_OUTPUT],
-            "stderr": _text_output(error.stderr)[:MAX_TOOL_OUTPUT],
-        }
-    except OSError as error:
-        return {"ok": False, "error": f"could not start pytest: {error}"}
-
-    return {
-        "ok": result.returncode == 0,
-        "timed_out": False,
-        "exit_code": result.returncode,
-        "stdout": result.stdout[:MAX_TOOL_OUTPUT],
-        "stderr": result.stderr[:MAX_TOOL_OUTPUT],
-    }
-
-
-def _execute_tool(workspace: Path, name: str, arguments: Any) -> str:
-    if not isinstance(arguments, dict):
-        return json.dumps({"ok": False, "error": "tool arguments must be a JSON object"})
-
-    try:
-        if name == "read_file":
-            path = arguments.get("path")
-            if not isinstance(path, str):
-                raise ToolError("path must be a string")
-            return read_file(workspace, path)
-        if name == "write_file":
-            path = arguments.get("path")
-            content = arguments.get("content")
-            if not isinstance(path, str) or not isinstance(content, str):
-                raise ToolError("path and content must be strings")
-            return json.dumps(write_file(workspace, path, content))
-        if name == "run_tests":
-            return json.dumps(run_tests(workspace))
-        return json.dumps({"ok": False, "error": f"unsupported tool: {name}"})
-    except ToolError as error:
-        return json.dumps({"ok": False, "error": str(error)})
-
-
 def _request_completion(
     base_url: str,
     api_key: str,
     run_id: str,
     model: str,
     messages: list[dict[str, Any]],
+    agent_role: str,
 ) -> dict[str, Any]:
     endpoint = f"{base_url.rstrip('/')}/chat/completions"
     payload = json.dumps({
@@ -200,8 +114,8 @@ def _request_completion(
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "X-Agent-Role": "agent-a-plain",
-            "User-Agent": f"AgentArena/agent-a-plain ({run_id})",
+            "X-Agent-Role": agent_role,
+            "User-Agent": f"AgentArena/{agent_role} ({run_id})",
         },
         method="POST",
     )
@@ -232,7 +146,11 @@ def _request_completion(
     return message
 
 
-def _tool_result(workspace: Path, call: Any) -> dict[str, str]:
+def _tool_result(
+    workspace: Path,
+    call: Any,
+    fault: Any,
+) -> dict[str, str]:
     if not isinstance(call, dict):
         raise AgentError("LLM returned a malformed tool call.")
     call_id = call.get("id")
@@ -249,11 +167,14 @@ def _tool_result(workspace: Path, call: Any) -> dict[str, str]:
     except json.JSONDecodeError:
         content = json.dumps({"ok": False, "error": "tool arguments are not valid JSON"})
     else:
-        content = _execute_tool(workspace, name, arguments)
+        content = SHARED_TOOLS.execute_tool(workspace, name, arguments, fault)
     return {"role": "tool", "tool_call_id": call_id, "content": content}
 
 
-def run_agent() -> int:
+def run_agent(
+    system_prompt: str = SYSTEM_PROMPT,
+    agent_role: str = AGENT_ROLE,
+) -> int:
     task_prompt = _required_env("TASK_PROMPT")
     workspace = Path(_required_env("WORKSPACE")).resolve()
     if not workspace.is_dir():
@@ -266,19 +187,23 @@ def run_agent() -> int:
     run_id = _required_env("RUN_ID")
     api_key = _required_env("OPENAI_API_KEY")
     model = _required_env("ARENA_MODEL")
+    try:
+        tool_fault = SHARED_TOOLS.load_tool_fault(os.environ.get("ARENA_TOOL_FAULT", ""))
+    except SHARED_TOOLS.ToolError as error:
+        raise AgentError(str(error)) from error
     messages: list[dict[str, Any]] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": task_prompt},
     ]
 
     for _ in range(MAX_TURNS):
         message = _request_completion(
-            base_url, api_key, run_id, model, messages,
+            base_url, api_key, run_id, model, messages, agent_role,
         )
         tool_calls = message.get("tool_calls")
         if isinstance(tool_calls, list) and tool_calls:
             messages.append(message)
-            messages.extend(_tool_result(workspace, call) for call in tool_calls)
+            messages.extend(_tool_result(workspace, call, tool_fault) for call in tool_calls)
             continue
 
         content = message.get("content")
@@ -290,9 +215,12 @@ def run_agent() -> int:
     raise AgentError(f"Agent exceeded the maximum of {MAX_TURNS} model turns.")
 
 
-def main() -> int:
+def main(
+    system_prompt: str = SYSTEM_PROMPT,
+    agent_role: str = AGENT_ROLE,
+) -> int:
     try:
-        return run_agent()
+        return run_agent(system_prompt, agent_role)
     except AgentError as error:
         print(f"Agent error: {error}", file=sys.stderr)
         return 1
