@@ -104,7 +104,11 @@ function App() {
   const route = getRoute(window.location.pathname)
   const params = new URLSearchParams(window.location.search)
   const requestedState = params.get('state')
-  const fixtureState = isFixtureState(requestedState) ? requestedState : 'success'
+  const fixtureState = isFixtureState(requestedState)
+    ? requestedState
+    : route === 'resilience'
+      ? 'fault'
+      : 'success'
   const fixture = mockFixtures[fixtureState]
   const liveMode = params.get('mode') === 'live'
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1177,26 +1181,14 @@ function Resilience({
   fixture: DashboardFixture
   fixtureState: FixtureState
 }) {
-  const rows: ResilienceRow[] = fixture.results.map((result) => ({
-    agent_id: result.agent_id,
-    scenario: 'provider_503_outage',
-    baseline_pass_rate: {
-      passed: 11,
-      n: 15,
-      value: 0.733,
-      ci_low: 0.48,
-      ci_high: 0.89,
-    },
-    scenario_pass_rate: result.pass_rate,
-    resilience_score: result.pass_rate.value === null ? null : result.pass_rate.value / 0.733,
-  }))
+  const rows = fixture.resilience
   return (
     <>
       <PageHeading title="Failure scenarios" description="Compare baseline performance with selected injected faults." />
       <FixtureNotice fixture={fixture} state={fixtureState} />
       {rows.length ? (
-        <div className="table-scroll">
-          <table>
+        <div className="table-scroll" role="region" aria-label="Failure scenario results" tabIndex={0}>
+          <table className="resilience-table">
             <thead>
               <tr>
                 <th scope="col">Agent</th>
@@ -1210,9 +1202,43 @@ function Resilience({
               {rows.map((row) => (
                 <tr key={row.agent_id}>
                   <th scope="row">{agents.find(({ agent_id }) => agent_id === row.agent_id)?.name ?? row.agent_id}</th>
-                  <td>{row.scenario}</td>
-                  <td>{formatRate(row.baseline_pass_rate.value)} · {row.baseline_pass_rate.n}</td>
-                  <td>{formatRate(row.scenario_pass_rate.value)} · {row.scenario_pass_rate.n}</td>
+                  <td>{scenarios.find(({ id }) => id === row.scenario)?.id ?? row.scenario}</td>
+                  <td>
+                    {row.baseline_pass_rate.n === 0
+                      ? formatPassRate(row.baseline_pass_rate)
+                      : (
+                        <a
+                          className="table-action-link"
+                          href={routeHref('/runs', {
+                            state: 'success',
+                            agent: row.agent_id,
+                            scenario: 'baseline',
+                            task: null,
+                            status: null,
+                          })}
+                        >
+                          {formatPassRate(row.baseline_pass_rate)}
+                        </a>
+                      )}
+                  </td>
+                  <td>
+                    {row.scenario_pass_rate.n === 0
+                      ? formatPassRate(row.scenario_pass_rate)
+                      : (
+                        <a
+                          className="table-action-link"
+                          href={routeHref('/runs', {
+                            state: 'fault',
+                            agent: row.agent_id,
+                            scenario: row.scenario,
+                            task: null,
+                            status: null,
+                          })}
+                        >
+                          {formatPassRate(row.scenario_pass_rate)}
+                        </a>
+                      )}
+                  </td>
                   <td>{row.resilience_score === null ? '—' : `${(row.resilience_score * 100).toFixed(1)}%`}</td>
                 </tr>
               ))}
@@ -1220,9 +1246,45 @@ function Resilience({
           </table>
         </div>
       ) : (
-        <EmptyState title="No fault results" message="Choose a fixture state with results to inspect resilience." />
+        <EmptyState
+          title="No injected-fault results"
+          message="Select Fault injected from the fixture selector to inspect the provider 503 example."
+        />
       )}
-      <p className="table-footnote">Tests resilience under chosen conditions, not all production failures.</p>
+      <p className="table-footnote">
+        Resilience score is scenario pass rate divided by baseline pass rate. Results are illustrative mock data.
+        Tests cover selected conditions, not all production failures.
+      </p>
+      <section className="content-section">
+        <h2>Scenario definitions</h2>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Available scenario definitions"
+          tabIndex={0}
+        >
+          <table className="scenario-catalog">
+            <thead>
+              <tr>
+                <th scope="col">Scenario</th>
+                <th scope="col">Group</th>
+                <th scope="col">Layer</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scenarios.map((scenario) => (
+                <tr key={scenario.id}>
+                  <th scope="row">{scenario.id}</th>
+                  <td>{scenario.group}</td>
+                  <td>{scenario.layer}</td>
+                  <td>{scenario.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </>
   )
 }
@@ -1231,6 +1293,16 @@ function Catalog({ fixture, fixtureState }: {
   fixture: DashboardFixture
   fixtureState: FixtureState
 }) {
+  const params = new URLSearchParams(window.location.search)
+  const categories = [...new Set(fixture.catalog.tasks.map(({ category }) => category))].sort()
+  const requestedCategory = params.get('category')
+  const selectedCategory = requestedCategory && categories.includes(requestedCategory)
+    ? requestedCategory
+    : 'all'
+  const visibleTasks = selectedCategory === 'all'
+    ? fixture.catalog.tasks
+    : fixture.catalog.tasks.filter(({ category }) => category === selectedCategory)
+
   return (
     <>
       <PageHeading title="Catalog" description="Agents and tasks available to benchmark." />
@@ -1257,12 +1329,37 @@ function Catalog({ fixture, fixtureState }: {
         </div>
       </section>
       <section className="content-section">
-        <h2>Tasks</h2>
+        <div className="catalog-section-header">
+          <h2>Tasks</h2>
+          <div className="catalog-toolbar">
+            <label className="scenario-control catalog-filter">
+              <span>Task category</span>
+              <select
+                aria-label="Filter tasks by category"
+                value={selectedCategory}
+                onChange={(event) => {
+                  const value = event.target.value
+                  window.location.href = routeHref('/catalog', {
+                    category: value === 'all' ? null : value,
+                  })
+                }}
+              >
+                <option value="all">All categories</option>
+                {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+            <p className="catalog-count" aria-live="polite">
+              {visibleTasks.length === fixture.catalog.tasks.length
+                ? `${visibleTasks.length} tasks`
+                : `${visibleTasks.length} of ${fixture.catalog.tasks.length} tasks`}
+            </p>
+          </div>
+        </div>
         <div className="table-scroll">
           <table>
             <thead><tr><th scope="col">Task</th><th scope="col">Category</th><th scope="col">Grader</th><th scope="col">Validated</th><th scope="col">Weak flag</th></tr></thead>
             <tbody>
-              {fixture.catalog.tasks.map((task) => (
+              {visibleTasks.map((task) => (
                 <tr key={task.task_id}>
                   <th scope="row">{task.task_id}</th>
                   <td>{task.category}</td>
@@ -1271,8 +1368,12 @@ function Catalog({ fixture, fixtureState }: {
                   <td>{task.weak === null ? 'Not assessed' : task.weak ? 'Weak' : 'No'}</td>
                 </tr>
               ))}
-              {fixture.catalog.tasks.length === 0 && (
-                <tr><td colSpan={5}>No tasks are available.</td></tr>
+              {visibleTasks.length === 0 && (
+                <tr><td colSpan={5}>
+                  {fixture.catalog.tasks.length === 0
+                    ? 'No tasks are available.'
+                    : `No tasks are in the ${selectedCategory} category.`}
+                </td></tr>
               )}
             </tbody>
           </table>
@@ -1280,6 +1381,14 @@ function Catalog({ fixture, fixtureState }: {
       </section>
     </>
   )
+}
+
+function formatPassRate(rate: ResilienceRow['baseline_pass_rate']) {
+  if (rate.n === 0) return '— (no runs)'
+  const interval = rate.ci_low === null || rate.ci_high === null
+    ? ''
+    : ` [${formatRate(rate.ci_low)}–${formatRate(rate.ci_high)}]`
+  return `${formatRate(rate.value)} (${rate.passed}/${rate.n})${interval}`
 }
 
 function Security({ fixture, fixtureState }: {
@@ -1305,6 +1414,7 @@ function Limitations() {
       <div className="limitations-list">
         <section><h2>Repeated runs are statistical</h2><p>Intervals describe uncertainty in repeated runs; small samples do not establish universal performance.</p></section>
         <section><h2>Faults are simulated</h2><p>Injected conditions cover only the selected scenarios, not every production failure.</p></section>
+        <section><h2>Tool faults are limited</h2><p>Tool-fault hooks exercise the reference agents only; they do not cover arbitrary third-party tool integrations.</p></section>
         <section><h2>Security is a baseline</h2><p>A benchmark security assessment is not a security audit or a guarantee of safe behavior.</p></section>
         <section><h2>Provider traffic may be unmeasurable</h2><p>Agents that hard-code provider endpoints can bypass the proxy and cannot be measured reliably.</p></section>
         <section><h2>Network and access</h2><p>The API has no authentication. Keep the service local and do not expose its ports publicly.</p></section>

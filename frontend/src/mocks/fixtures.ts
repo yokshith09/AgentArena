@@ -2,6 +2,7 @@ import type {
   Agent,
   Benchmark,
   Event,
+  ResilienceRow,
   ResultRow,
   RunDetail,
   Scenario,
@@ -21,6 +22,7 @@ export type FixtureState =
 export type DashboardFixture = {
   label: string
   benchmark: Benchmark | null
+  resilience: ResilienceRow[]
   catalog: {
     agents: Agent[]
     tasks: TaskSummary[]
@@ -519,6 +521,32 @@ const faultResult = singleRun(makeResult('agent-a-plain', {
     ci_high: 0,
   },
 }), false)
+const noScenarioRuns: ResilienceRow['scenario_pass_rate'] = {
+  passed: 0,
+  n: 0,
+  value: null,
+  ci_low: null,
+  ci_high: null,
+}
+const resilienceResults: ResilienceRow[] = completedResults.map((result) => {
+  const scenarioPassRate = result.agent_id === 'agent-a-plain'
+    ? faultResult.pass_rate
+    : noScenarioRuns
+  const resilienceScore =
+    result.pass_rate.value === null ||
+    result.pass_rate.value === 0 ||
+    scenarioPassRate.value === null
+      ? null
+      : scenarioPassRate.value / result.pass_rate.value
+
+  return {
+    agent_id: result.agent_id,
+    scenario: 'provider_503_outage',
+    baseline_pass_rate: result.pass_rate,
+    scenario_pass_rate: scenarioPassRate,
+    resilience_score: resilienceScore,
+  }
+})
 
 const faultEvents: Event[] = [
   {
@@ -602,6 +630,15 @@ export const tasks: TaskSummary[] = [
     validated: true,
     weak: null,
   },
+  {
+    task_id: 'research-citations',
+    category: 'research',
+    prompt: 'Summarize a question using current sources and cite each claim.',
+    grader_type: 'answer_match',
+    faults_allowed: ['baseline'],
+    validated: false,
+    weak: null,
+  },
 ]
 
 export const scenarios: Scenario[] = [
@@ -623,6 +660,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
   loading: {
     label: 'Loading benchmark data',
     benchmark: null,
+    resilience: [],
     catalog: { agents: [], tasks: [] },
     results: [],
     compareResults: [],
@@ -632,6 +670,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
   error: {
     label: 'Benchmark data unavailable',
     benchmark: null,
+    resilience: [],
     catalog: { agents: [], tasks: [] },
     results: [],
     compareResults: [],
@@ -641,6 +680,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
   success: {
     label: 'Completed benchmark',
     benchmark: completed,
+    resilience: [],
     catalog: { agents, tasks },
     results: completedResults,
     compareResults: defaultCompareResults,
@@ -650,6 +690,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
   empty: {
     label: 'Empty workspace',
     benchmark: null,
+    resilience: [],
     catalog: { agents: [], tasks: [] },
     results: [],
     compareResults: [],
@@ -669,6 +710,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       agent_ids: ['agent-a-plain'],
       n_runs: 2,
     }),
+    resilience: [],
     catalog: { agents, tasks },
     results: [infraResult],
     compareResults: compareResults([infraResult]),
@@ -707,6 +749,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       scenarios: ['provider_503_outage'],
       n_runs: 1,
     }),
+    resilience: resilienceResults,
     catalog: { agents, tasks },
     results: [faultResult],
     compareResults: compareResults([faultResult]),
@@ -723,6 +766,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 0,
       excluded: 0,
     }, 0.013),
+    resilience: [],
     catalog: { agents, tasks },
     results: partialResults,
     compareResults: compareResults(partialResults),
@@ -739,6 +783,7 @@ export const mockFixtures: Record<FixtureState, DashboardFixture> = {
       infra_error: 0,
       excluded: 0,
     }, 0.013, { spend_cap_usd: 0.01 }),
+    resilience: [],
     catalog: { agents, tasks },
     results: partialResults,
     compareResults: compareResults(partialResults),
