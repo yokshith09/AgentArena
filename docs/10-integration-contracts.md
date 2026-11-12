@@ -154,4 +154,5 @@ docs/     (all contribute; Dev-C stewards)
 ### Changelog
 | Date | Version | Change | Ack |
 |---|---|---|---|
-| 2026-11-11 | 0 | Draft pack created | — pending CP0 |
+| 2026-11-11 | 0 | Draft pack created | — |
+| 2026-11-12 | 0 | DEV-A (Akhil) reviewed and accepted the current drafts and P-02…P-17; version 1 remains pending team sign-off and open-question disposition | DEV-A only; Dev-B/Dev-C pending |
