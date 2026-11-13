@@ -25,7 +25,7 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-08 | Runner | Dummy agent gets all env vars (§2.2); diff captured; timeout kills process tree; cleanup done | B | P0 | not run |
 | T-09 | Runner | Spawn failure → `sandbox_error`; works on each dev OS (A-06); non-proxy network call blocked + logged in the Docker sandbox | B | P0 | not run |
 | T-10 | Grader | Hidden tests run from clean copy; hidden tests absent from agent workspace | B | P0 | not run |
-| T-11 | AG | Each reference agent completes a scripted task against `mock_llm` | C | P0 | not run |
+| T-11 | AG | Each reference agent completes a scripted task against `mock_llm` | C | P0 | pass (Agent A/B/C scripted mock tests; shared tools suite also passed) |
 | T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | not run |
 | T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | B | P0 | not run |
 | T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | B | P0 | not run |
