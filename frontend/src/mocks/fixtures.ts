@@ -322,7 +322,7 @@ const baseEvents: Event[] = [
     ts: '2026-01-01T10:03:38Z',
     type: 'grader_result',
     agent_role: null,
-    payload: { passed: true, suites: 2 },
+    payload: { passed: true, suite_count: 2 },
     latency: null,
     error: null,
   },

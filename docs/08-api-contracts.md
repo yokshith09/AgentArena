@@ -56,7 +56,7 @@ Other OpenAI endpoints are forwarded under the same prefix if the gateway suppor
 | GET | `/api/scenarios` | `{items: Scenario[], total}` (always includes `baseline`) |
 
 ```
-Agent        = { agent_id, name, mode, entrypoint, model_config, description }       // 07 agents
+Agent        = { agent_id, name, mode, entrypoint, model_config, description: string|null } // 07 agents
 TaskSummary  = { task_id, category, prompt, grader_type, faults_allowed[], validated, weak|null }
 Scenario     = { id, group: "baseline"|"provider"|"tool"|"instruction"|"environment", layer: "none"|"proxy"|"agent_env"|"runner", description }
 ```

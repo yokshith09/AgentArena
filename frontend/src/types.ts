@@ -17,7 +17,7 @@ export type Agent = {
   mode: string
   entrypoint: string
   model_config: Record<string, unknown>
-  description: string
+  description: string | null
 }
 
 export type TaskSummary = {

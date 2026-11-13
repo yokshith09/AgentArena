@@ -14,7 +14,7 @@
 | Validator | B | task dir | `{ok, checks[]}` (§2.4) | Grader | good/bad task fixtures | T-06 |
 | Grader | B | task dir + workspace dir | `GradeResult` (§2.3) | pytest | reference solution as input | T-07, T-10 |
 | Runner | B | `RunSpec` (§2.1) | `RunResult` | agent, proxy URL | `agents/dummy` + `mock_llm` | T-08, T-09 |
-| Orchestrator | B | DB `benchmarks` queued | `runs` finalised, benchmark state | DB, Runner, Grader | stubbed Runner returning canned `RunResult` | T-13, T-14 |
+| Orchestrator | B | DB `benchmarks` queued | `runs` finalised, benchmark state, lifecycle/grader events | DB, Runner, Grader | stubbed Runner returning canned `RunResult` | T-13, T-14 |
 | Reference agents | C | env contract (§2.2) | edited workspace, exit code | proxy URL | `mock_llm` | T-11, T-12 |
 | Tasks | B (hand-written) / A (generated) | — | task folders | validator | — | T-06 |
 | Dashboard | C | 08 §3 JSON | UI | API | `frontend/mocks/*.json` (mock mode) | T-17…T-19, T-30 |
@@ -71,10 +71,10 @@ Exit codes (CLI): 0 = graded (pass or fail), 2 = grader infrastructure failure (
 `validate(task_dir) -> { ok: bool, checks: [{ name, ok, message }] }` with checks: `grader_config_parses`, `protected_files_exist`, `broken_state_fails`, `reference_solution_passes`, `deterministic` (graded twice, same outcome).
 
 ### 2.5 Proxy ↔ orchestrator ordering contract
-1. Orchestrator sets run `state='running'` **before** spawning the agent (proxy 404s otherwise).
-2. After agent exit, orchestrator waits ≤ 2 s for in-flight event writes, then aggregates events (07 §4) and sets `state='done'`.
+1. Orchestrator sets run `state='running'` **before** spawning the agent (proxy 404s otherwise), then records `agent_started`.
+2. After agent exit and grading, orchestrator records `grader_result`, waits ≤ 2 s for in-flight event writes, then aggregates events (07 §4) and sets `state='done'`.
 3. Classification input: `events` where `type='llm_call'` and `error='upstream'` (real failures) vs `error='injected'` (ignored for INFRA).
-4. Proxy never updates `runs`; orchestrator never writes `llm_call` events.
+4. Proxy never updates `runs`; orchestrator owns `agent_started` and `grader_result` events and never writes `llm_call` or `tool_call` events.
 
 ### 2.6 `mock_llm` (A)
 HTTP server answering `POST /v1/chat/completions` (and the proxy-shaped `POST /runs/{run_id}/v1/chat/completions` for agent development before the proxy exists). Behaviour driven by a JSON script file: ordered list of responses, each either `{text}` or `{tool_calls:[{name, arguments}]}`, always with a `usage` block; optional `fail_next: {n, status}` to emulate upstream errors; supports `stream=true`. Proxy reads upstream base URL from `UPSTREAM_BASE_URL` [P]. Script format (implemented): see the docstring of `mock_llm/server.py`; admin endpoint `POST /_admin/fail {"n","status"}`.
@@ -157,3 +157,4 @@ docs/     (all contribute; Dev-C stewards)
 | 2026-11-11 | 0 | Draft pack created | — |
 | 2026-11-12 | 0 | DEV-A (Akhil) reviewed and accepted the current drafts and P-02…P-17; version 1 remains pending team sign-off and open-question disposition | DEV-A only; Dev-B/Dev-C pending |
 | 2026-11-12 | 0 | DEV-A confirmed the canonical T-30 fixture scope from docs 07/10; other-owner agreement is not yet confirmed | DEV-A only |
+| 2026-11-13 | 0 | Proposed lifecycle/grader event types and nullable agent description to align schema, API, and UI fixtures | Draft correction; all acknowledgements pending |
