@@ -19,7 +19,11 @@ PATH = re.compile(r"^(/runs/[^/]+)?/v1/chat/completions$")
 
 def load(path=None):
     path = path or os.environ.get("MOCK_SCRIPT")
-    s = json.load(open(path)) if path else DEFAULT
+    if path:
+        with open(path, encoding="utf-8") as script_file:
+            s = json.load(script_file)
+    else:
+        s = DEFAULT
     STATE.update(i=0, script=s, fail=dict(s.get("fail_next") or {"n": 0, "status": 503}))
 
 
