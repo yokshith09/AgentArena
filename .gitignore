@@ -2,8 +2,25 @@
 .env.*
 !.env.example
 .anchor/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Frontend
 node_modules/
-__pycache__/
+frontend/dist/
+
+# Generated output / local service data (Bifrost config + keys live in data/)
 data/
-__pycache__/
-*.pyc
+build/
+dist/
+*.log

@@ -19,8 +19,8 @@ Nothing else starts until its contract (X1) exists. Only one milestone is active
 
 | Class | Items |
 |---|---|
-| Implemented | **None.** Repo is not a git repository; no source, compose, DB, or tests exist. (A hidden `.anchor/` folder is present in the workspace; its origin is not known to this plan and it is ignored.) |
-| In progress | Documentation pack (docs 01–14, README, this roadmap): drafted, **not signed off** (X1). |
+| Implemented | Git repository exists on `main`; `.env` is ignored. No application source, compose, DB, or tests exist yet. (A hidden `.anchor/` folder is present in the workspace; its origin is not known to this plan and it is ignored.) |
+| In progress | Documentation pack (docs 01–14, README, this roadmap): drafted, **not signed off** (X1). Repo bootstrap X2 is partial: folder skeleton, `.env.example`, and dependency specification remain. |
 | Planned | All tasks in the [board](docs/14-task-board.md) except those below. |
 | Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · none of the items depend on the rubric any more · C14 needs a Tavily key (OQ-13). |
 | Unknown | Whether any work from 1–11 Nov exists outside this folder (OQ-12). If it does, re-audit before M0. |
