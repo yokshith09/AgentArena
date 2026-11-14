@@ -15,11 +15,11 @@ Pri = priority of the feature tested. Result column is the only place status is 
 
 | ID | Component | What is checked | Owner | Pri | Result |
 |---|---|---|---|---|---|
-| T-01 | PX | Non-stream call via `mock_llm` → one `llm_call` event with correct tokens, cost, `cost_confidence`, latency | A | P0 | not run |
-| T-02 | PX | Streaming call: chunks pass through unchanged; `include_usage` injected; tokens captured | A | P0 | not run |
-| T-03 | PX | Added latency vs direct `mock_llm` measured (NFR-03) | A | P0 | not run |
-| T-04 | PX | Response with N tool calls → N `tool_call` events | A | P0 | not run |
-| T-05 | PX | Unknown/finished `run_id` → 404 OpenAI error; upstream 5xx tagged `error=upstream`; DB down → still forwards | A | P0 | not run |
+| T-01 | PX | Non-stream call via `mock_llm` → one `llm_call` event with correct tokens, cost, `cost_confidence`, latency | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
+| T-02 | PX | Streaming call: chunks pass through unchanged; `include_usage` injected; tokens captured | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
+| T-03 | PX | Added latency vs direct `mock_llm` measured (NFR-03) | A | P0 | pass 2026-11-14: median +17.3 ms (direct 5.6 ms, via proxy 22.9 ms, p90 26.1 ms; 40 calls, uvicorn + `mock_llm` + compose Postgres on Windows host) |
+| T-04 | PX | Response with N tool calls → N `tool_call` events | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`); stream and non-stream |
+| T-05 | PX | Unknown/finished `run_id` → 404 OpenAI error; upstream 5xx tagged `error=upstream`; DB down → still forwards | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
 | T-06 | Validator/TK | Good tasks accepted; task whose broken state passes → rejected; task whose reference fails → rejected; nondeterministic task rejected | B | P0 | not run |
 | T-07 | Grader | Agent edits protected tests → `tamper_detected`, `passed=false`; reference solution → passes | B | P0 | not run |
 | T-08 | Runner | Dummy agent gets all env vars (§2.2); diff captured; timeout kills process tree; cleanup done | B | P0 | not run |
@@ -29,13 +29,13 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | not run |
 | T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | B | P0 | not run |
 | T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | B | P0 | not run |
-| T-15 | Stats | Wilson, bootstrap (fixed seed), median/std, edge cases (n=0,1, all pass) vs hand-computed goldens | A | P0 | not run |
-| T-16 | API | Each endpoint's response validates against models and mock payloads; error envelope; launch validation rules | A | P0 | not run |
+| T-15 | Stats | Wilson, bootstrap (fixed seed), median/std, edge cases (n=0,1, all pass) vs hand-computed goldens | A | P0 | pass 2026-11-14 (`tests/stats`, 12 tests, branch `feat/A5-stats-api`) |
+| T-16 | API | Each endpoint's response validates against models and mock payloads; error envelope; launch validation rules | A | P0 | pass 2026-11-14 (`tests/api`, 31 tests incl. doc 08 §4 payloads; `frontend/mocks` not yet present, re-run when C1 lands) |
 | T-17 | UI | Every screen renders loading/empty/error/success/partial/halted from fixtures; MOCK ribbon visible in mock mode | C | P0 | pass (manual browser check: 9 data routes × 8 fixture states, 72 checks; `/limitations` static route and mock ribbon also checked) |
 | T-18 | UI+API | Live mode: leaderboard and run trace for a 2×5×3 benchmark; load < 2 s (NFR-04) | C | P0 | not run |
 | T-19 | UI | Accessibility checklist ([05](05-ux-spec.md) §7): keyboard-only pass, focus, contrast spot-check, status not color-only | C | P0 | pass (manual browser check: tab order and visible focus on all 10 routes; mobile menu opens by Enter and links are reachable; Run detail tabs switch by arrow keys; Catalog filter and benchmark preview operate by keyboard; contrast spot-check: link 5.78:1, focus ring 7.31:1, PASS 8.02:1, FAIL 8.63:1; status conveyed in text) |
-| T-20 | Faults | 503 and 429 faults fire exactly as defined (first N), emit `fault_injected`, are reproducible with same run_id | A | P0 | not run |
-| T-21 | Faults/Stats | Instruction and tool faults applied; resilience score computed per P-16, null on zero baseline | B/A | P0 | not run |
+| T-20 | Faults | 503 and 429 faults fire exactly as defined (first N), emit `fault_injected`, are reproducible with same run_id | A | P0 | pass 2026-11-14 (`tests/proxy/test_faults.py`, 20 tests incl. loader validation and restart mid-run; compose smoke 503×3→200, 429×2→200; branch `feat/A7-provider-faults`) |
+| T-21 | Faults/Stats | Instruction and tool faults applied; resilience score computed per P-16, null on zero baseline | B/A | P0 | partial: resilience part (A) passes in `tests/api::test_resilience` (PR #3); instruction (B8) and tool (C7) faults not run |
 | T-22 | Registry | Register by one command; doctor catches broken manifest and "no proxy traffic" | B | P1 | not run |
 | T-23 | Security | Obedient agent flagged; well-behaved agent not; canary leak detected | B | P2 | not run |
 | T-24 | Model override | Matrix separates agent vs model effect on fixture data | A | P2 | not run |

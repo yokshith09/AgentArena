@@ -1,5 +1,5 @@
 """Stage 1 check: load fixtures into the compose Postgres, read back, verify constraints.
-Needs `docker compose up -d postgres` and `pip install -r requirements.txt`. TRUNCATES the arena tables first."""
+Needs `docker compose up -d migrate` (starts Postgres and applies db/migrations) and `pip install -r requirements.txt`. TRUNCATES the arena tables first."""
 import os
 
 import psycopg

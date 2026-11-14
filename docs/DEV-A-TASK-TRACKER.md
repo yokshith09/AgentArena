@@ -4,6 +4,8 @@
 
 **Role:** DEV-A — Platform.
 **Last updated:** 2026-11-12.
+**Role:** DEV-A — Platform.  
+**Last updated:** 2026-11-14.
 **Project state at tracker creation:** The Git repository is initialized on `main` with a clean worktree and `.env` is ignored. The application/source skeleton, `.env.example`, and dependency manifests are not present. The project is still at the documentation/foundation stage; no implementation tasks are considered done based on documentation alone.
 
 ## Status rules
@@ -21,14 +23,14 @@ Do not mark a task done just because code was written. Record test/evidence link
 |---:|---|---|---|---|---|
 | 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — approved and pushed on DEV-A; awaiting merge to main |
 | 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts/P-02…P-17 and confirms canonical fixtures; Dev-B/Dev-C acknowledgement and open questions remain |
-| 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | Planned |
-| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | Planned |
-| 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Planned |
-| 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget details are still a team question |
-| 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | Planned |
-| 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | Planned |
+| 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | In progress — postgres/bifrost/mock_llm compose + `pricing.yaml` shell landed from main (7bb2440); proxy/api/orchestrator/frontend services, Bifrost pin and start/stop smoke remain |
+| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — verified 2026-11-14: `python db/check_db.py` → `db OK` on compose Postgres 16 (fixtures load, 4 events read back, status/state + event-type CHECKs reject bad rows, `schema_migrations` = `001_init`). Migration runner `db/migrate.py` + compose `migrate` one-shot on `feat/A2-migrate` (tests pass; fresh-volume and existing-DB runs verified). Remaining: merge to main |
+| 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
+| 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
+| 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | In progress — merged to main via PR #2 (2026-11-14); T-01…T-05 pass vs `mock_llm`; remaining: real-Bifrost check once A1 unblocks |
+| 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | In progress — implemented on `feat/A5-stats-api`; T-15 + T-16 pass; needs review/merge; re-check against `frontend/mocks` when C1 lands |
 | 9 | A6 | Proxy-vs-Bifrost reconciliation | Conditional P0 / M2 | A4, A1, V-03 | Blocked/conditional — determine feasibility after V-03 verification |
-| 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | Planned |
+| 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | In progress — provider faults on `feat/A7-provider-faults` (T-20 passes, compose smoke OK); resilience endpoint ships with A5 (PR #3); needs review/merge |
 | 11 | A13 | Mutation task generator and test-strength score | P0 / M3 | B1, B3 | Planned — coordinate interfaces and generated-task handoff with Dev-B |
 | 12 | X5 | Milestone 2 compose integration and benchmark smoke | P0 / M2 | A5, B5, B6, C5, C4 | Planned — shared integration task; DEV-A owns the task |
 | 13 | X7 | Freeze and restore demo database | P0 / M4 | X6 | Planned |
@@ -62,7 +64,7 @@ The order above is the practical dependency order, not permission to bypass the 
 - [ ] Review schema, HTTP API, and component interfaces in [07-data-schema.md](07-data-schema.md), [08-api-contracts.md](08-api-contracts.md), and [10-integration-contracts.md](10-integration-contracts.md).
 - [ ] Confirm the fixture list and T-30 scope with Dev-B and Dev-C.
 - [ ] Obtain all three developers' acknowledgement; record the contract version and acknowledgements in doc 10's changelog.
-- [ ] Record known answers, explicit defaults, or unresolved blockers and dates in [15-open-questions.md](15-open-questions.md) / [15-open-questions-answered.md](15-open-questions-answered.md).
+- [ ] Record known answers, explicit defaults, or unresolved blockers and dates in [15-open-questions.md](15-open-questions.md).
 - [ ] Do not silently decide another developer's interface; use the documented contract-change process for disagreements.
 
 **Known unresolved DEV-A items:** OQ-05 provider/model/key/budget; OQ-06 runtime smoke tests for streaming usage/auth/logging; OQ-09 collaborator access confirmation; OQ-12 confirmation of any prior external work and `.anchor/` ownership. OQ-08 affects B4 (Dev-B), and OQ-13 affects Tavily (Dev-C), so request answers from the relevant owners rather than assuming them.
@@ -85,13 +87,16 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Implement the data schema and repeatable local database setup.
 
-- [ ] Implement `db/migrations/001_init.sql` from [07-data-schema.md](07-data-schema.md); preserve its table constraints, enums, indexes, and single-writer rules.
-- [ ] Add an idempotent migration/apply step and migration tracking.
-- [ ] Add fabricated, clearly labelled fixtures under `db/fixtures`; never represent fixtures as benchmark results.
-- [ ] Exercise insert/read of a fake run and its events; check schema/state constraints and fixture load.
+- [x] Implement `db/migrations/001_init.sql` from [07-data-schema.md](07-data-schema.md); preserve its table constraints, enums, indexes, and single-writer rules.
+- [x] Add an idempotent migration/apply step and migration tracking.
+- [x] Add fabricated, clearly labelled fixtures under `db/fixtures`; never represent fixtures as benchmark results.
+- [x] Exercise insert/read of a fake run and its events; check schema/state constraints and fixture load.
 
 **Acceptance:** Tables and constraints match doc 07; migrations and fixtures load; run/event insert-read works.
 **Tests/evidence:** Migration/fixture command output and T-30 database-load result.
+**Acceptance:** Tables and constraints match doc 07; migrations and fixtures load; run/event insert-read works.  
+**Tests/evidence:** Migration/fixture command output and T-30 database-load result.  
+**Evidence (2026-11-14):** `db/check_db.py` → `db OK`. `pytest tests/db` → 12 passed (fresh DB gets full schema, idempotent re-run, initdb-created DB recognised, new files applied in numeric order, failing file rolled back and stops, dry run, CLI exit codes 0/1/2, bad names). Compose: existing volume → `up to date (1 applied)`, exit 0, proxy starts after it; fresh volume (separate project) → `applying 001_init`, 6 tables, then `up to date`.
 
 ### 5. A3 — `mock_llm`
 
@@ -123,29 +128,33 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Forward agent traffic and persist trustworthy usage events.
 
-- [ ] Implement the agent-facing API and run-state lookup per [08-api-contracts.md](08-api-contracts.md) §2.
-- [ ] Forward requests to Bifrost or `mock_llm`; preserve normal responses; add streaming usage options when required.
-- [ ] Capture model, tokens, latency, cost and confidence; use the versioned pricing table and documented missing-usage behavior.
-- [ ] Persist `llm_call`, `tool_call`, and provider-fault events with documented payload shapes.
-- [ ] Return the documented OpenAI-shaped 404 for an unknown/non-running run.
-- [ ] Ensure a DB write failure is surfaced to logs but does not prevent forwarding to the agent.
-- [ ] Implement `X-Agent-Role` event attribution as specified.
+- [x] Implement the agent-facing API and run-state lookup per [08-api-contracts.md](08-api-contracts.md) §2.
+- [x] Forward requests to Bifrost or `mock_llm`; preserve normal responses; add streaming usage options when required.
+- [x] Capture model, tokens, latency, cost and confidence; use the versioned pricing table and documented missing-usage behavior.
+- [x] Persist `llm_call`, `tool_call`, and provider-fault events (provider-fault events arrive with A7) with documented payload shapes.
+- [x] Return the documented OpenAI-shaped 404 for an unknown/non-running run.
+- [x] Ensure a DB write failure is surfaced to logs but does not prevent forwarding to the agent.
+- [x] Implement `X-Agent-Role` event attribution as specified.
 
 **Acceptance:** Behavior conforms to docs 07/08; DB failure does not block forwarding; T-01…T-05 pass.
 **Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.
+**Acceptance:** Behavior conforms to docs 07/08; DB failure does not block forwarding; T-01…T-05 pass.  
+**Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.  
+**Tests/evidence (2026-11-14):** `pytest tests/proxy` → 18 passed (T-01, T-02, T-04 stream+non-stream, T-05 incl. finished run, upstream 5xx/unreachable, DB down; headers, missing usage, unpriced model, truncation, other endpoints). T-03 live: median +17.3 ms. Compose smoke: `docker compose --profile mock up -d --build proxy mock_llm` → stream + non-stream curl stored 2 `llm_call` events (8/11 tokens), unknown run → 404. Event writes are a single multi-row INSERT; a BEGIN/executemany/COMMIT version added ~50 ms per call on Windows.
 
 ### 8. A5 — Statistics engine and P0 API
 
 **Goal:** Deliver server-side statistics and all P0 dashboard API shapes.
 
-- [ ] Implement stats per [03-feature-specs.md](03-feature-specs.md) F-07 and metric definitions in doc 07 §4; do not compute stats in the UI.
-- [ ] Implement Wilson pass-rate intervals and fixed-seed bootstrap intervals, plus mean/median/std and edge cases.
-- [ ] Exclude INFRA_ERROR rows from agent outcome statistics while returning their counts and correct null values.
-- [ ] Implement P0 catalog, benchmark, run/event, results, and resilience endpoints per [08-api-contracts.md](08-api-contracts.md) §3.
-- [ ] Validate request parameters and return the documented error envelope.
+- [x] Implement stats per [03-feature-specs.md](03-feature-specs.md) F-07 and metric definitions in doc 07 §4; do not compute stats in the UI.
+- [x] Implement Wilson pass-rate intervals and fixed-seed bootstrap intervals, plus mean/median/std and edge cases.
+- [x] Exclude INFRA_ERROR rows from agent outcome statistics while returning their counts and correct null values.
+- [x] Implement P0 catalog, benchmark, run/event, results, and resilience endpoints per [08-api-contracts.md](08-api-contracts.md) §3.
+- [x] Validate request parameters and return the documented error envelope.
 - [ ] Validate API responses against canonical fixtures and record generated time, counts, and confidence values accurately.
 
-**Acceptance:** Responses match doc 08; INFRA exclusions/null handling are correct; T-15 and T-16 pass.
+**Acceptance:** Responses match doc 08; INFRA exclusions/null handling are correct; T-15 and T-16 pass.  
+**Tests/evidence (2026-11-14):** `pytest tests/stats tests/api` → 43 passed (Wilson goldens incl. 11/15 = 0.4805–0.8910 matching doc 08 §4, bootstrap fixed seed, n=0/1, INFRA exclusion, progress/spend, launch validation rules, pagination bounds, error envelope, doc 08 §4 payloads vs models). Compose: `docker compose up -d --build api` → all endpoints answer on fixture data; `/docs` 200. Open item: validate `frontend/mocks` once C1 adds them.
 
 ### 9. A6 — Proxy-vs-Bifrost reconciliation (conditional)
 
@@ -162,13 +171,14 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Run deterministic outage/rate-limit scenarios and report measured resilience.
 
-- [ ] Load/validate provider fault configuration using the fault definitions in doc 07 §7.
-- [ ] Implement `provider_503_outage` and `provider_429_ratelimit` at the proxy layer with first-N behavior and deterministic seeding.
-- [ ] Emit `fault_injected` events and mark injected errors distinctly from real upstream errors.
-- [ ] Implement the resilience response per doc 08 §3.6 and formula P-16; return `null` when the baseline is zero/absent.
-- [ ] Verify injected failures never get classified as INFRA_ERROR and that repeat runs are reproducible.
+- [x] Load/validate provider fault configuration using the fault definitions in doc 07 §7.
+- [x] Implement `provider_503_outage` and `provider_429_ratelimit` at the proxy layer with first-N behavior and deterministic seeding.
+- [x] Emit `fault_injected` events and mark injected errors distinctly from real upstream errors.
+- [x] Implement the resilience response per doc 08 §3.6 and formula P-16; return `null` when the baseline is zero/absent.
+- [x] Verify injected failures never get classified as INFRA_ERROR and that repeat runs are reproducible.
 
-**Acceptance:** T-20 and T-21 pass; provider faults and resilience output are visible and correctly scoped.
+**Acceptance:** T-20 and T-21 pass; provider faults and resilience output are visible and correctly scoped.  
+**Tests/evidence (2026-11-14):** `pytest tests/proxy/test_faults.py` → 20 passed (exact first-N for 503/429 with OpenAI error shape and `Retry-After`, `fault_injected` + `llm_call(error=injected)` ordering, upstream never reached for injected calls, same sequence across runs, no re-injection after a proxy restart, baseline/tool/unknown scenarios untouched, loader rejects bad YAML). Full proxy suite 38 passed. Compose smoke: 503 run → 503 503 503 200; 429 run → 429 429 200 200. Resilience formula (P-16, null on zero baseline) covered by `tests/api::test_resilience` in PR #3. "Never INFRA" holds on the proxy side (`error='injected'`); the orchestrator's classification is Dev-B's (B5).
 
 ### 11. A13 — Mutation generator and test-strength score
 
@@ -254,3 +264,10 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-12 | Created from the repository documentation pack; verified Git/bootstrap facts and captured DEV-A task sequence and initial status. |
 | 2026-11-12 | Implemented and verified X2; approved by DEV-A and pushed as commit `1c84fe3`; awaiting merge to main. |
 | 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
+| 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
+| 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
+| 2026-11-14 | A4 measuring proxy implemented on `feat/A4-proxy` (FastAPI, compose service, README); T-01…T-05 pass against `mock_llm`; NFR-03 measured at +17.3 ms median. |
+| 2026-11-14 | A2 migration runner (`db/migrate.py`) and compose `migrate` one-shot added on `feat/A2-migrate`; initdb mount removed; proxy waits for migrate. |
+| 2026-11-14 | Reviewed Dev-C's C1 contract proposal: 100 fixture objects vs A5 API models, 93 matched. Accepted `agent_started` / `grader_result` event types: migration `002_event_lifecycle_types` (PR #5) and API `Event` model (PR #3). Reported fixture `steps: 7.2` (must be an integer) to Dev-C. |
+| 2026-11-14 | A5 stats engine + P0 API implemented on `feat/A5-stats-api` (FastAPI, compose `api` service, README with stats definitions); T-15 and T-16 pass. |
+| 2026-11-14 | A7 provider faults implemented on `feat/A7-provider-faults` (faults/*.yaml, loader, proxy injection); T-20 passes; resilience endpoint ships with A5 (PR #3). |

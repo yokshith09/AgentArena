@@ -7,7 +7,6 @@
 .venv/
 venv/
 __pycache__/
-data/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
@@ -20,7 +19,8 @@ htmlcov/
 node_modules/
 frontend/dist/
 
-# Generated output
+# Generated output / local service data (Bifrost config + keys live in data/)
+data/
 build/
 dist/
 *.log

@@ -158,3 +158,4 @@ docs/     (all contribute; Dev-C stewards)
 | 2026-11-12 | 0 | DEV-A (Akhil) reviewed and accepted the current drafts and P-02…P-17; version 1 remains pending team sign-off and open-question disposition | DEV-A only; Dev-B/Dev-C pending |
 | 2026-11-12 | 0 | DEV-A confirmed the canonical T-30 fixture scope from docs 07/10; other-owner agreement is not yet confirmed | DEV-A only |
 | 2026-11-13 | 0 | Proposed lifecycle/grader event types and nullable agent description to align schema, API, and UI fixtures | Draft correction; all acknowledgements pending |
+| 2026-11-14 | 0 | DEV-A accepted the `agent_started` / `grader_result` event types: `db/migrations/002_event_lifecycle_types.sql` (DB) and the API `Event` model; `Agent.description` was already nullable in the API | DEV-A accepted; Dev-B (writes these events) pending |

@@ -1,4 +1,4 @@
-# Shared application dependencies; versions verified from PyPI on 2026-11-12.
+# Shared application dependencies; versions verified from PyPI on 2026-11-12 (jsonschema on 2026-11-14).
 fastapi==0.162.5
 httpx==0.28.1
 jsonschema==4.26.0

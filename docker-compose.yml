@@ -1,4 +1,4 @@
-# Stage 0-1 services only. proxy/api/orchestrator/frontend are added by their owners as they land.
+# Stage 0-2 services. api/orchestrator/frontend are added by their owners as they land.
 services:
   postgres:
     image: postgres:16-alpine
@@ -6,19 +6,50 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-arena}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arena}
       POSTGRES_DB: ${POSTGRES_DB:-arena}
-    ports: ["5432:5432"]
+    ports: ["${POSTGRES_PORT:-5432}:5432"]   # set POSTGRES_PORT if a native Postgres already uses 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/migrations:/docker-entrypoint-initdb.d:ro   # runs *.sql on first start only
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arena}"]
       interval: 5s
       retries: 10
 
+  migrate:   # one-shot: applies pending db/migrations in order, then exits (docs/07 section 9)
+    build: { context: ., dockerfile: proxy/Dockerfile }   # reuses the Python + psycopg image
+    command: ["python", "db/migrate.py"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-arena}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-arena}
+      PGDATABASE: ${POSTGRES_DB:-arena}
+    volumes: ["./db:/app/db:ro"]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+
   bifrost:
     image: maximhq/bifrost   # pin a version tag once smoke test (A1) passes
     ports: ["${BIFROST_PORT:-8080}:8080"]
     volumes: ["./data/bifrost:/app/data"]   # provider key is added in the UI at http://localhost:8080
+
+  proxy:   # A4 measuring proxy; agents use OPENAI_BASE_URL=http://<host>:${PROXY_PORT}/runs/<run_id>/v1
+    build: { context: ., dockerfile: proxy/Dockerfile }
+    environment:
+      # libpq connection variables (no credentials inside a URL)
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-arena}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-arena}
+      PGDATABASE: ${POSTGRES_DB:-arena}
+      # Bifrost by default; for zero-cost dev: UPSTREAM_BASE_URL=http://mock_llm:9000/v1 with --profile mock
+      UPSTREAM_BASE_URL: ${UPSTREAM_BASE_URL:-http://bifrost:8080/v1}
+      BIFROST_API_KEY: ${BIFROST_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports: ["${PROXY_PORT:-8001}:8001"]
+    volumes:   # edits apply on restart, no rebuild
+      - ./pricing.yaml:/app/pricing.yaml:ro
+      - ./faults:/app/faults:ro           # provider fault catalog (A7), validated at startup
+    depends_on:
+      migrate: { condition: service_completed_successfully }
 
   mock_llm:
     image: python:3.12-alpine
@@ -27,6 +58,21 @@ services:
     environment: { MOCK_PORT: "9000" }
     ports: ["${MOCK_LLM_PORT:-9000}:9000"]
     volumes: ["./mock_llm:/app:ro"]
+
+  api:   # A5 dashboard REST API + stats (docs/08 section 3); OpenAPI at http://localhost:${API_PORT}/docs
+    build: { context: ., dockerfile: api/Dockerfile }
+    environment:
+      # libpq connection variables (no credentials inside a URL)
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-arena}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-arena}
+      PGDATABASE: ${POSTGRES_DB:-arena}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports: ["${API_PORT:-8000}:8000"]
+    volumes: ["./faults:/app/faults:ro"]   # scenario catalog read at request time
+    depends_on:
+      postgres: { condition: service_healthy }
 
 volumes:
   pgdata:
