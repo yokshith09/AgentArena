@@ -1,5 +1,7 @@
 # 11 · Team Execution Plan
 
+> **2026-11-15: Dev-B has not contributed; their tasks are reassigned in [16](16-final-day-plan.md). Where this file says Dev-B, read docs/16 and the board.**
+>
 > Status: Draft; names pending (OQ-04). Team = 3; skills not used for assignment (user instruction). Scope = the shared plan's full cut line (D-12): **P0 = Stages 0–8, 10, 15 · P1 = Stage 9 · P2 = Stages 11, 12, 13 · P3 = Stage 14.** Dates: [12](12-delivery-plan.md).
 
 ## 1. Workstreams (P-15)

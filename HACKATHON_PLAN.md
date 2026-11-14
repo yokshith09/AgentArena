@@ -4,6 +4,9 @@ Operating plan for the team. Milestones/focus: [PROJECT_ROADMAP.md](PROJECT_ROAD
 
 Last updated 2026-11-12. Deadline 2026-11-15. **Current Focus: M0 — contracts sign-off (X1), repo (X2), then parallel start of A1/A2/A3/B1/C1.**
 
+## UPDATE 2026-11-15 (last day)
+Dev-B has not contributed. The runner, grader, validator, orchestrator and tasks are reassigned between Dev-A and Dev-C, with proposed cuts, in **[docs/16-final-day-plan.md](docs/16-final-day-plan.md)**. Read that first. Submission closes 15 Nov 11:59 PM (timezone to confirm).
+
 ## 0. Teammates: start here (15 minutes)
 1. Clone: `git clone https://github.com/yokshith09/AgentArena.git` (needs collaborator access, OQ-09).
 2. Read in order: this file → [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §1–3 → your role's docs ([docs/README.md](docs/README.md)) → your tasks in [docs/14-task-board.md](docs/14-task-board.md).
@@ -109,3 +112,4 @@ Out of scope. [docs/PPT_FRAMEWORK.md](docs/PPT_FRAMEWORK.md) remains an untouche
 |---|---|---|
 | 2026-11-11 | — | Documentation pack drafted; nothing implemented |
 | 2026-11-12 | post-bootstrap | Repository and foundation files committed (`7bb2440`); X2 complete; A3 mock check passes; X1 sign-off pending |
+| 2026-11-15 | final day | Dev-B work reassigned to Dev-A/Dev-C (docs/16); real end-to-end run still missing; cuts proposed |

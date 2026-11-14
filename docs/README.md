@@ -31,6 +31,7 @@ Status: **Draft for CP0 sign-off (2026-11-11).** The documentation describes the
 | 13 | [Traceability](13-traceability.md) | Criterion → requirement → feature → owner → test → evidence |
 | 14 | [Task board](14-task-board.md) | Task IDs, owners, estimates, acceptance, tests, status |
 | 15 | [Open questions](15-open-questions.md) | Expanded OQs with options, defaults and recorded answers |
+| 16 | [Final-day plan](16-final-day-plan.md) | Dev-B work reassigned, split, order of work, proposed cuts |
 | — | [DEV-A task tracker](DEV-A-TASK-TRACKER.md) | DEV-A's ordered task checklist, progress, blockers, and evidence |
 | — | [PROJECT_ROADMAP](../PROJECT_ROADMAP.md) | Current focus, audit, milestones, criteria map |
 | — | [HACKATHON_PLAN](../HACKATHON_PLAN.md) | Allocation, dependency graph, SDLC rules, risks, cuts |
