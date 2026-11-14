@@ -22,7 +22,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — approved and pushed on DEV-A; awaiting merge to main |
 | 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts/P-02…P-17 and confirms canonical fixtures; Dev-B/Dev-C acknowledgement and open questions remain |
 | 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | In progress — postgres/bifrost/mock_llm compose + `pricing.yaml` shell landed from main (7bb2440); proxy/api/orchestrator/frontend services, Bifrost pin and start/stop smoke remain |
-| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — verified 2026-11-14: `python db/check_db.py` → `db OK` on compose Postgres 16 (fixtures load, 4 events read back, status/state + event-type CHECKs reject bad rows, `schema_migrations` = `001_init`). Remaining: apply step for migrations after 001 (initdb runs only on first start); merge to main |
+| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — verified 2026-11-14: `python db/check_db.py` → `db OK` on compose Postgres 16 (fixtures load, 4 events read back, status/state + event-type CHECKs reject bad rows, `schema_migrations` = `001_init`). Migration runner `db/migrate.py` + compose `migrate` one-shot on `feat/A2-migrate` (tests pass; fresh-volume and existing-DB runs verified). Remaining: merge to main |
 | 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
 | 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
 | 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | In progress — implemented on `feat/A4-proxy`; T-01…T-05 pass vs `mock_llm`; compose smoke OK; needs review/merge and a real-Bifrost check once A1 unblocks |
@@ -85,13 +85,14 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Implement the data schema and repeatable local database setup.
 
-- [ ] Implement `db/migrations/001_init.sql` from [07-data-schema.md](07-data-schema.md); preserve its table constraints, enums, indexes, and single-writer rules.
-- [ ] Add an idempotent migration/apply step and migration tracking.
-- [ ] Add fabricated, clearly labelled fixtures under `db/fixtures`; never represent fixtures as benchmark results.
-- [ ] Exercise insert/read of a fake run and its events; check schema/state constraints and fixture load.
+- [x] Implement `db/migrations/001_init.sql` from [07-data-schema.md](07-data-schema.md); preserve its table constraints, enums, indexes, and single-writer rules.
+- [x] Add an idempotent migration/apply step and migration tracking.
+- [x] Add fabricated, clearly labelled fixtures under `db/fixtures`; never represent fixtures as benchmark results.
+- [x] Exercise insert/read of a fake run and its events; check schema/state constraints and fixture load.
 
 **Acceptance:** Tables and constraints match doc 07; migrations and fixtures load; run/event insert-read works.  
-**Tests/evidence:** Migration/fixture command output and T-30 database-load result.
+**Tests/evidence:** Migration/fixture command output and T-30 database-load result.  
+**Evidence (2026-11-14):** `db/check_db.py` → `db OK`. `pytest tests/db` → 12 passed (fresh DB gets full schema, idempotent re-run, initdb-created DB recognised, new files applied in numeric order, failing file rolled back and stops, dry run, CLI exit codes 0/1/2, bad names). Compose: existing volume → `up to date (1 applied)`, exit 0, proxy starts after it; fresh volume (separate project) → `applying 001_init`, 6 tables, then `up to date`.
 
 ### 5. A3 — `mock_llm`
 
@@ -258,3 +259,5 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
 | 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
 | 2026-11-14 | A4 measuring proxy implemented on `feat/A4-proxy` (FastAPI, compose service, README); T-01…T-05 pass against `mock_llm`; NFR-03 measured at +17.3 ms median. |
+| 2026-11-14 | A2 migration runner (`db/migrate.py`) and compose `migrate` one-shot added on `feat/A2-migrate`; initdb mount removed; proxy waits for migrate. |
+| 2026-11-14 | Reviewed Dev-C's C1 contract proposal: 100 fixture objects vs A5 API models, 93 matched. Accepted `agent_started` / `grader_result` event types: migration `002_event_lifecycle_types` (PR #5) and API `Event` model (PR #3). Reported fixture `steps: 7.2` (must be an integer) to Dev-C. |

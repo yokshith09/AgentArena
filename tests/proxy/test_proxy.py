@@ -1,5 +1,5 @@
 """Proxy tests T-01...T-05 (docs/09). Need Postgres with the 001 schema at DATABASE_URL
-(e.g. `docker compose up -d postgres`); skipped otherwise. mock_llm runs in-process."""
+(e.g. `docker compose up -d migrate`); skipped otherwise. mock_llm runs in-process."""
 from __future__ import annotations
 
 import json

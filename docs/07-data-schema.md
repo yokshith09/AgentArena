@@ -12,7 +12,7 @@
 | `tasks` | Index of validated task folders | Seed loader (B) |
 | `benchmarks` | One launched matrix | API creates; orchestrator updates `state` |
 | `runs` | One execution of (agent, task, scenario, repeat, attempt) | Orchestrator |
-| `events` | Ordered trace of a run | Proxy; orchestrator for monitor events (Stage 4 sandbox) |
+| `events` | Ordered trace of a run | Proxy; orchestrator for lifecycle, grading, and monitor events |
 
 Filesystem is source of truth for tasks and agent manifests; DB rows are an index (path + hash).
 
@@ -95,7 +95,7 @@ CREATE TABLE events (
   run_id      uuid NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,-- [plan]
   ts          timestamptz NOT NULL DEFAULT now(),                     -- [plan]
   type        text NOT NULL CHECK (type IN
-                ('llm_call','tool_call','command','file_write','net_attempt','fault_injected')), -- [plan]
+                ('agent_started','llm_call','tool_call','grader_result','command','file_write','net_attempt','fault_injected')), -- [plan]
   agent_role  text,                                                   -- [plan] NULL unless X-Agent-Role present
   payload     jsonb NOT NULL DEFAULT '{}'::jsonb,                     -- [plan] see §3
   latency     integer,                                                -- [plan] milliseconds
@@ -114,8 +114,10 @@ Every payload may include `"truncated": true` when bodies exceed 8 KB (stored te
 
 | type | `payload` keys | `latency` | `error` |
 |---|---|---|---|
+| `agent_started` | `task_id` | null | null |
 | `llm_call` | `endpoint`, `model`, `status_code`, `tokens_in`, `tokens_out`, `cost`, `cost_confidence`, `finish_reason`, `stream`(bool), `request_preview`, `response_preview` | ms to completion | `upstream` (non-injected upstream failure), `injected` (fault), or free text |
 | `tool_call` | `name`, `arguments_preview`, `call_id` | null | null |
+| `grader_result` | `passed`, `suite_count` | null | null |
 | `fault_injected` | `fault_id`, `group`, `detail` | null | null |
 | `command` | `argv`, `cwd`, `exit_code` | ms | null |
 | `file_write` | `path`, `outside_workspace`(bool) | null | null |
