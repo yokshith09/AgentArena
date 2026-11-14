@@ -102,6 +102,23 @@ def test_fresh_database_gets_full_schema_and_is_idempotent(fresh_db, mig_dir):
 
 
 @needs_db
+def test_repo_migrations_apply_and_allow_lifecycle_events(fresh_db):
+    applied = m.migrate(fresh_db, ROOT / "db" / "migrations", log=quiet)
+    assert applied[:2] == ["001_init", "002_event_lifecycle_types"]
+    with psycopg.connect(fresh_db, autocommit=True) as c:
+        c.execute("INSERT INTO agents (agent_id, name, mode, entrypoint, source_path)"
+                  " VALUES ('a', 'a', 'command', 'x', 'x')")
+        c.execute("INSERT INTO tasks (task_id, category, prompt, workspace, grader, reference_solution,"
+                  " task_dir, task_hash) VALUES ('t', 'coding', 'p', 'w', '{}', 'r', 'd', 'h')")
+        rid = c.execute("INSERT INTO runs (agent_id, task_id) VALUES ('a', 't') RETURNING run_id").fetchone()[0]
+        for t in ("agent_started", "grader_result", "llm_call", "tool_call", "command",
+                  "file_write", "net_attempt", "fault_injected"):
+            c.execute("INSERT INTO events (run_id, type) VALUES (%s, %s)", (rid, t))
+        with pytest.raises(psycopg.errors.CheckViolation):
+            c.execute("INSERT INTO events (run_id, type) VALUES (%s, 'bogus')", (rid,))
+
+
+@needs_db
 def test_database_initialised_by_initdb_is_recognised(fresh_db, mig_dir):
     # Simulates the old path: Postgres initdb ran 001_init.sql directly.
     with psycopg.connect(fresh_db, autocommit=True) as c:

@@ -260,3 +260,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
 | 2026-11-14 | A4 measuring proxy implemented on `feat/A4-proxy` (FastAPI, compose service, README); T-01…T-05 pass against `mock_llm`; NFR-03 measured at +17.3 ms median. |
 | 2026-11-14 | A2 migration runner (`db/migrate.py`) and compose `migrate` one-shot added on `feat/A2-migrate`; initdb mount removed; proxy waits for migrate. |
+| 2026-11-14 | Reviewed Dev-C's C1 contract proposal: 100 fixture objects vs A5 API models, 93 matched. Accepted `agent_started` / `grader_result` event types: migration `002_event_lifecycle_types` (PR #5) and API `Event` model (PR #3). Reported fixture `steps: 7.2` (must be an integer) to Dev-C. |
