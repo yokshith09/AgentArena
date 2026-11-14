@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-`npm run build` type-checks and builds the app; `npm run lint` runs Oxlint.
+`npm run build` type-checks and builds the app; `npm run lint` runs Oxlint; `npm test` runs the Vitest suite (every route in every mock state, live-mode data/error/launcher behaviour against a stubbed API).
 
 The default is mock mode, with a persistent MOCK DATA ribbon. The fixture-state selector switches
 between completed, empty, INFRA exclusion, injected fault, partial, spend-cap-halted, loading, and

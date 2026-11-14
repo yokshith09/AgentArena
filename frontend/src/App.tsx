@@ -6,7 +6,7 @@ import {
   type DashboardFixture,
   type FixtureState,
 } from './mocks/fixtures'
-import { loadLive, type LiveData } from './api/live'
+import { ApiFailure, createBenchmark, loadLive, type LiveData } from './api/live'
 import FixtureNotice from './components/FixtureNotice'
 import RunDetailPage from './components/RunDetail'
 import type { ResilienceRow, ResultRow, RunDetail } from './types'
@@ -97,6 +97,12 @@ function routeHref(path: string, changes: Record<string, string | null>) {
   return `${path}${query ? `?${query}` : ''}`
 }
 
+// Internal links keep ?mode=live so navigating never silently falls back to mock data.
+function keepMode(path: string) {
+  const mode = new URLSearchParams(window.location.search).get('mode')
+  return mode ? `${path}?mode=${encodeURIComponent(mode)}` : path
+}
+
 function withQuery(changes: Record<string, string | null>) {
   return routeHref(window.location.pathname, changes)
 }
@@ -166,7 +172,7 @@ function App() {
   return (
     <div className="app-frame">
       <header className="app-header">
-        <a className="brand" href="/" aria-label="AgentArena home">
+        <a className="brand" href={keepMode('/')} aria-label="AgentArena home">
           <span className="brand-mark" aria-hidden="true">A</span>
           <span>AgentArena</span>
         </a>
@@ -187,7 +193,7 @@ function App() {
           {navigation.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={keepMode(item.href)}
               aria-current={item.href === '/' ? route === 'leaderboard' ? 'page' : undefined :
                 window.location.pathname === item.href ? 'page' : undefined}
               onClick={() => setMenuOpen(false)}
@@ -252,13 +258,12 @@ function App() {
             : 'MOCK DATA — illustrative fixtures, not benchmark results'}
         </div>
         <main id="main-content" className="main-sheet">
-          {liveMode && live.status === 'error' && (
-            <div className="notice notice-warning" role="alert">{live.message}</div>
-          )}
           <RouteView
-              route={route}
+            route={route}
             fixture={fixture}
             fixtureState={fixtureState}
+            liveMode={liveMode}
+            liveMessage={live.message}
           />
         </main>
       </div>
@@ -274,16 +279,26 @@ function RouteView({
   route,
   fixture,
   fixtureState,
+  liveMode,
+  liveMessage,
 }: {
   route: Route
   fixture: DashboardFixture
   fixtureState: FixtureState
+  liveMode: boolean
+  liveMessage: string
 }) {
   if (route !== 'limitations' && fixtureState === 'loading') {
     return <FixtureLoading title={routeTitles[route]} description={routeDescriptions[route]} />
   }
   if (route !== 'limitations' && fixtureState === 'error') {
-    return <FixtureError title={routeTitles[route]} description={routeDescriptions[route]} />
+    return (
+      <FixtureError
+        title={routeTitles[route]}
+        description={routeDescriptions[route]}
+        liveMessage={liveMode ? liveMessage : undefined}
+      />
+    )
   }
 
   switch (route) {
@@ -292,7 +307,7 @@ function RouteView({
     case 'benchmarks':
       return <Benchmarks fixture={fixture} fixtureState={fixtureState} />
     case 'new-benchmark':
-      return <NewBenchmark fixture={fixture} fixtureState={fixtureState} />
+      return <NewBenchmark fixture={fixture} liveMode={liveMode} />
     case 'compare':
       return <Compare fixture={fixture} fixtureState={fixtureState} />
     case 'run-detail':
@@ -333,16 +348,35 @@ function FixtureLoading({ title, description }: { title: string; description: st
   )
 }
 
-function FixtureError({ title, description }: { title: string; description: string }) {
+function FixtureError({
+  title,
+  description,
+  liveMessage,
+}: {
+  title: string
+  description: string
+  liveMessage?: string
+}) {
   return (
     <>
       <PageHeading title={title} description={description} />
       <section className="fixture-error-state" role="alert" aria-labelledby="fixture-error-title">
         <h2 id="fixture-error-title">Could not load {title.toLowerCase()} data</h2>
-        <p>This simulated fixture error made no live API request.</p>
-        <a className="button button-secondary" href={withQuery({ state: 'success' })}>
-          Return to completed fixture
-        </a>
+        {liveMessage === undefined ? (
+          <>
+            <p>This simulated fixture error made no live API request.</p>
+            <a className="button button-secondary" href={withQuery({ state: 'success' })}>
+              Return to completed fixture
+            </a>
+          </>
+        ) : (
+          <>
+            <p>{liveMessage}</p>
+            <button className="button button-secondary" type="button" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </>
+        )}
       </section>
     </>
   )
@@ -400,7 +434,7 @@ function Leaderboard({
         <EmptyState
           title="No benchmark results yet"
           message="Launch a benchmark to compare agents on the same tasks."
-          action={<a className="button button-primary" href="/benchmarks/new">Launch a benchmark</a>}
+          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>Launch a benchmark</a>}
         />
       ) : (
         <>
@@ -419,7 +453,7 @@ function Leaderboard({
                 ))}
               </select>
             </div>
-            <span>{results.length} agents · generated Jan 1, 2026</span>
+            <span>{results.length} agents · generated {formatGenerated(fixture.generatedAt)}</span>
           </div>
           {selectedInScope.length > 1 && (
             <a className="button button-secondary compare-action" href={compareHref}>
@@ -512,7 +546,7 @@ function Leaderboard({
           </div>
           <p className="table-footnote">
             Success intervals are Wilson 95% confidence intervals. INFRA_ERROR runs are excluded;
-            steps count LLM calls and tool calls count requested tools. <a href="/limitations">Metric definitions</a>.
+            steps count LLM calls and tool calls count requested tools. <a href={keepMode('/limitations')}>Metric definitions</a>.
           </p>
         </>
       )}
@@ -588,14 +622,14 @@ function Benchmarks({
       <PageHeading
         title="Benchmarks"
         description="Track benchmark progress, spend, and the runs behind each result."
-        action={<a className="button button-primary" href="/benchmarks/new">New benchmark</a>}
+        action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>New benchmark</a>}
       />
       <FixtureNotice fixture={fixture} state={fixtureState} />
       {!benchmark ? (
         <EmptyState
           title="No benchmarks yet"
           message="Create a benchmark to run agents against a shared task set."
-          action={<a className="button button-primary" href="/benchmarks/new">Create benchmark</a>}
+          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>Create benchmark</a>}
         />
       ) : (
         <div className="table-scroll">
@@ -649,13 +683,13 @@ function Benchmarks({
 
 function NewBenchmark({
   fixture,
-  fixtureState,
+  liveMode,
 }: {
   fixture: DashboardFixture
-  fixtureState: FixtureState
+  liveMode: boolean
 }) {
   const [message, setMessage] = useState('')
-  const [name, setName] = useState('Python repair · baseline')
+  const [name, setName] = useState(liveMode ? '' : 'Python repair · baseline')
   const [selectedAgentIds, setSelectedAgentIds] = useState(
     fixture.catalog.agents.map(({ agent_id }) => agent_id),
   )
@@ -666,6 +700,7 @@ function NewBenchmark({
   const [runsPerCombination, setRunsPerCombination] = useState('3')
   const [spendCap, setSpendCap] = useState('5.00')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
   const catalogAgents = fixture.catalog.agents
   const catalogTasks = fixture.catalog.tasks
   const selectedTasks = catalogTasks.filter(({ task_id }) => selectedTaskIds.includes(task_id))
@@ -713,17 +748,54 @@ function NewBenchmark({
     }
     const slots = selectedAgentIds.length * selectedTaskIds.length *
       selectedScenarioIds.length * runCount
-    setMessage(`Mock preview ready: ${slots} run slots. No benchmark was queued.`)
+    if (!liveMode) {
+      setMessage(`Mock preview ready: ${slots} run slots. No benchmark was queued.`)
+      return
+    }
+    setSubmitting(true)
+    setMessage('Queuing benchmark…')
+    createBenchmark({
+      name: name.trim(),
+      agent_ids: selectedAgentIds,
+      task_ids: selectedTaskIds,
+      scenarios: selectedScenarioIds,
+      n_runs: runCount,
+      spend_cap_usd: cap,
+    })
+      .then((benchmark) => {
+        setMessage(`Benchmark "${benchmark.name}" queued (${slots} run slots). Opening Benchmarks…`)
+        window.location.href = routeHref('/benchmarks', { benchmark: benchmark.benchmark_id })
+      })
+      .catch((error: unknown) => {
+        setSubmitting(false)
+        if (error instanceof ApiFailure && Object.keys(error.fields).length > 0) {
+          const fieldMap: Record<string, string> = {
+            name: 'name',
+            agent_ids: 'agents',
+            task_ids: 'tasks',
+            scenarios: 'scenarios',
+            n_runs: 'runs',
+            spend_cap_usd: 'spend',
+          }
+          const mapped: Record<string, string> = {}
+          Object.entries(error.fields).forEach(([key, text]) => {
+            mapped[fieldMap[key] ?? 'name'] = text
+          })
+          setErrors(mapped)
+          setMessage('The API rejected the benchmark. Fix the highlighted fields.')
+        } else {
+          setMessage(error instanceof Error ? error.message : 'Could not queue the benchmark.')
+        }
+      })
   }
   return (
     <>
       <PageHeading title="New benchmark" description="Choose a shared set of agents, tasks, and scenarios." />
-      <FixtureNotice fixture={fixture} state={fixtureState} />
       {catalogAgents.length === 0 || catalogTasks.length === 0 ? (
         <EmptyState
           title="Agents and tasks are required"
           message="Add an agent and a validated task before configuring a benchmark."
-          action={<a className="button button-secondary" href="/catalog">Open catalog</a>}
+          action={<a className="button button-secondary" href={keepMode('/catalog')}>Open catalog</a>}
         />
       ) : (
         <form className="launch-form" noValidate onSubmit={submit}>
@@ -859,14 +931,16 @@ function NewBenchmark({
             </label>
           </div>
           <div className="launch-preview">
-            <strong>Mock preview</strong>
+            <strong>{liveMode ? 'Launch summary' : 'Mock preview'}</strong>
             <span>
               {selectedAgentIds.length * selectedTaskIds.length * selectedScenarioIds.length *
                 (Number(runsPerCombination) || 0)} planned run slots
             </span>
-            <span>No benchmark will be queued by this preview.</span>
+            <span>{liveMode ? 'Submitting queues a real benchmark that spends provider budget up to the cap.' : 'No benchmark will be queued by this preview.'}</span>
           </div>
-          <button className="button button-primary" type="submit">Preview launch</button>
+          <button className="button button-primary" type="submit" disabled={submitting}>
+            {liveMode ? 'Queue benchmark' : 'Preview launch'}
+          </button>
           {Object.keys(errors).length > 0 && (
             <p className="form-error-summary" role="alert">Correct the highlighted fields before previewing.</p>
           )}
@@ -1064,7 +1138,7 @@ function Compare({
           message={availableAgentIds.length < 2
             ? 'Choose a fixture with results for at least two agents.'
             : 'Select two or three agents to compare their outcomes.'}
-          action={<a className="button button-secondary" href="/">View leaderboard</a>}
+          action={<a className="button button-secondary" href={keepMode('/')}>View leaderboard</a>}
         />
       )}
     </>
@@ -1517,6 +1591,12 @@ function StatusBadge({ status }: { status: RunDetail['status'] }) {
 
 function SummaryValue({ label, value }: { label: string; value: string }) {
   return <dl className="summary-value"><dt>{label}</dt><dd>{value}</dd></dl>
+}
+
+function formatGenerated(iso: string | undefined) {
+  if (!iso) return 'Jan 1, 2026' // mock fixtures only
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString()
 }
 
 function formatRate(value: number | null) {

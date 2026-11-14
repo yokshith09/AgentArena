@@ -21,6 +21,7 @@ export type FixtureState =
 
 export type DashboardFixture = {
   label: string
+  generatedAt?: string // set by live mode; mock fixtures use a fixed illustrative date
   benchmark: Benchmark | null
   resilience: ResilienceRow[]
   catalog: {

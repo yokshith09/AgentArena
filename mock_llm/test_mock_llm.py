@@ -3,9 +3,9 @@ import json
 import os
 import tempfile
 import threading
+import unittest
 import urllib.error
 import urllib.request
-import unittest
 import warnings
 
 import server

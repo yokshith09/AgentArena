@@ -28,7 +28,7 @@ def fixtures():
 
 def test_all_fixture_objects_match_api_models(fixtures):
     checked = 0
-    for state, fx in fixtures.items():
+    for fx in fixtures.values():
         if fx["benchmark"]:
             models.Benchmark.model_validate(fx["benchmark"])
             checked += 1

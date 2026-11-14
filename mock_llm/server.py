@@ -101,7 +101,7 @@ class H(BaseHTTPRequestHandler):
 
 def serve(port=None):
     load()
-    return ThreadingHTTPServer(("0.0.0.0", int(port if port is not None else os.environ.get("MOCK_PORT", 9000))), H)
+    return ThreadingHTTPServer(("0.0.0.0", int(port if port is not None else os.environ.get("MOCK_PORT", "9000"))), H)
 
 
 if __name__ == "__main__":

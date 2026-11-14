@@ -4,6 +4,7 @@
 import type {
   Agent,
   Benchmark,
+  BenchmarkConfig,
   Event,
   Page,
   ResilienceRow,
@@ -20,10 +21,41 @@ const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://lo
 
 export class ApiFailure extends Error {
   status: number
-  constructor(message: string, status: number) {
+  fields: Record<string, string>
+  constructor(message: string, status: number, fields: Record<string, string> = {}) {
     super(message)
     this.status = status
+    this.fields = fields
   }
+}
+
+async function failureFrom(res: Response): Promise<ApiFailure> {
+  let message = `API returned ${res.status}`
+  let fields: Record<string, string> = {}
+  try {
+    const body = await res.json()
+    if (body?.error?.message) message = body.error.message
+    if (body?.error?.details?.fields) fields = body.error.details.fields
+  } catch {
+    /* keep default message */
+  }
+  return new ApiFailure(message, res.status, fields)
+}
+
+// POST /api/benchmarks (docs/08 section 3.2). Resolves with the queued Benchmark; rejects with ApiFailure.
+export async function createBenchmark(config: BenchmarkConfig): Promise<Benchmark> {
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/api/benchmarks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    })
+  } catch {
+    throw new ApiFailure(`Cannot reach the API at ${BASE}. Is it running (docker compose up -d api)?`, 0)
+  }
+  if (!res.ok) throw await failureFrom(res)
+  return res.json() as Promise<Benchmark>
 }
 
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -34,14 +66,7 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
     throw new ApiFailure(`Cannot reach the API at ${BASE}. Is it running (docker compose up -d api)?`, 0)
   }
   if (!res.ok) {
-    let message = `API returned ${res.status}`
-    try {
-      const body = await res.json()
-      if (body?.error?.message) message = body.error.message
-    } catch {
-      /* keep default message */
-    }
-    throw new ApiFailure(message, res.status)
+    throw await failureFrom(res)
   }
   return res.json() as Promise<T>
 }
@@ -71,6 +96,7 @@ export async function loadLive(
   let resilience: ResilienceRow[] = []
   let runs: RunDetail[] = []
   let events: Event[] = []
+  let generatedAt: string | undefined
 
   if (benchmark) {
     const id = benchmark.benchmark_id
@@ -81,6 +107,7 @@ export async function loadLive(
       get<Page<Run>>(`/api/runs?benchmark_id=${id}&limit=200`, signal),
     ])
     results = byAgent.items
+    generatedAt = byAgent.generated_at
     compareResults = byAgentTask.items
     resilience = resil.items
     runs = runPage.items.map((r) => ({ ...r, env_fingerprint: null, grader_result: null, workspace_diff: null }))
@@ -103,6 +130,7 @@ export async function loadLive(
     scenarios: scenarios.items,
     fixture: {
       label: 'Live API',
+      generatedAt,
       benchmark,
       resilience,
       catalog: { agents: agents.items, tasks: tasks.items },
