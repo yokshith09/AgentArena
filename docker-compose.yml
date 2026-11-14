@@ -45,7 +45,9 @@ services:
       BIFROST_API_KEY: ${BIFROST_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports: ["${PROXY_PORT:-8001}:8001"]
-    volumes: ["./pricing.yaml:/app/pricing.yaml:ro"]   # price edits apply on restart, no rebuild
+    volumes:   # edits apply on restart, no rebuild
+      - ./pricing.yaml:/app/pricing.yaml:ro
+      - ./faults:/app/faults:ro           # provider fault catalog (A7), validated at startup
     depends_on:
       migrate: { condition: service_completed_successfully }
 

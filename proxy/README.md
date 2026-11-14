@@ -22,6 +22,7 @@ Local without Docker: `uvicorn proxy.app:app --port 8001` with `UPSTREAM_BASE_UR
 | `DATABASE_URL` | empty → libpq `PGHOST`/`PGPORT`/`PGUSER`/`PGPASSWORD`/`PGDATABASE` | Reads `runs`, writes `events` only (compose sets the `PG*` variables) |
 | `PRICING_FILE` | `<repo>/pricing.yaml` | Versioned prices (docs/07 §8) |
 | `BIFROST_API_KEY` | empty | Sent upstream only if set; the agent's `Authorization` header is always dropped |
+| `FAULTS_DIR` | `<repo>/faults` | Fault catalog (docs/07 §7); invalid files stop the proxy at startup |
 
 ## Behaviour
 
@@ -37,7 +38,27 @@ Local without Docker: `uvicorn proxy.app:app --port 8001` with `UPSTREAM_BASE_UR
 - DB down: requests are still forwarded (run check skipped); lost events are logged to stderr.
 - Previews over 8 KB are cut and the payload gets `truncated: true`. Extra payload keys beyond 07 §3
   (additive): `response_model`, `pricing_version`, `warning`.
-- Provider faults (A7) hook in before forwarding — not implemented yet.
+
+## Provider faults (A7)
+
+A run whose `scenario` is a proxy-layer fault in `faults/` gets its first `params.first_n` requests
+answered by the proxy instead of the upstream:
+
+| Fault | Response | Then |
+|---|---|---|
+| `provider_503_outage` | first 3 → 503 `server_error` / `injected_fault` | pass through |
+| `provider_429_ratelimit` | first 2 → 429 `rate_limit_error` / `injected_fault`, `Retry-After: 1` | pass through |
+
+- Each injected call writes `fault_injected` (`fault_id`, `group`, `detail: "call k of N"`) then
+  `llm_call` with `error='injected'`, `cost=0`, `cost_confidence='verified'`, `payload.fault_id`.
+  Injected errors are never tagged `upstream`, so they never count toward INFRA_ERROR.
+- First-N is deterministic: the same scenario gives the same sequence for every run. The per-run
+  count is seeded from the run's existing `fault_injected` events, so a proxy restart mid-run does
+  not inject again.
+- The loader validates every `faults/*.yaml` (required keys, id = file name, group/layer enums;
+  for proxy faults `group: provider`, `first_n >= 1`, 4xx/5xx `status`). Non-proxy faults (tool,
+  instruction) are loaded but handled by the runner / agent env, not here.
+- If the DB is down the run's scenario is unknown, so nothing is injected (requests still forward).
 
 ## Tests
 
@@ -45,4 +66,5 @@ Local without Docker: `uvicorn proxy.app:app --port 8001` with `UPSTREAM_BASE_UR
 # with DATABASE_URL (or PG* variables) pointing at the compose Postgres, e.g. from your .env
 python -m pytest tests/proxy -q
 ```
-Needs the compose Postgres (skipped otherwise); `mock_llm` runs in-process. Covers T-01…T-05.
+Needs the compose Postgres (skipped otherwise); `mock_llm` runs in-process. Covers T-01…T-05 and
+T-20 (`tests/proxy/test_faults.py`).

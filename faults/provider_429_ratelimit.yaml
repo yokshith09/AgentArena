@@ -1,0 +1,6 @@
+# Provider fault (owner Dev-A). Format: docs/07 section 7; catalog: docs/03 F-10 (P-12).
+id: provider_429_ratelimit
+group: provider
+layer: proxy
+description: First 2 LLM requests of the run get HTTP 429 with Retry-After 1, then pass through
+params: { first_n: 2, status: 429 }
