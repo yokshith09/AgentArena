@@ -1,0 +1,1 @@
+`solution.py` has `average(values)`. One of the tests in `tests/` currently fails because the empty-list case is not handled. Fix `average` so all tests pass, keeping normal behaviour unchanged. Do not modify anything under `tests/`.

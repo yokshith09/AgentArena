@@ -1,0 +1,7 @@
+# Tool fault (owner Dev-C). Format: docs/07 section 7. Delivered to the agent as ARENA_TOOL_FAULT (P-08);
+# honoured by agents/common/tools.py, so it affects our reference agents only (documented limit).
+id: tool_run_tests_error
+group: tool
+layer: agent_env
+description: The run_tests tool returns an error on its first 2 calls
+params: { tool: run_tests, fail_first_n: 2, message: "pytest could not be started: internal tool error (injected)" }

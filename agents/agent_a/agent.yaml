@@ -1,5 +1,5 @@
 name: agent-a-plain
 mode: command
 entrypoint: python agent.py
-model_config: { model: mock-model }
-description: Framework-free coding agent; mock-model is for local scripted smoke tests
+model_config: { model: groq/openai/gpt-oss-20b }
+description: Framework-free coding agent, no LLM retry by design (the no-resilience baseline)

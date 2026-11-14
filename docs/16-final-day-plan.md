@@ -1,6 +1,6 @@
 # 16 · Final-day plan (15 Nov): Dev-B work reassigned
 
-> Status: **proposed 2026-11-15, cuts need team approval.** Authoritative for who owns the former Dev-B tasks and what is cut today. Task IDs, acceptance and estimates stay in [14](14-task-board.md); contracts in [10](10-integration-contracts.md) (§2.1 runner, §2.3 grader, §2.5 ordering).
+> Status: **cuts approved 2026-11-15, including dropping Tavily (Bifrost-only submission).** Authoritative for who owns the former Dev-B tasks and what is cut today. Task IDs, acceptance and estimates stay in [14](14-task-board.md); contracts in [10](10-integration-contracts.md) (§2.1 runner, §2.3 grader, §2.5 ordering).
 
 ## 1. Situation
 - Submission window closes **15 Nov 2026 11:59 PM** (timezone not stated; confirm on the portal, OQ-03).

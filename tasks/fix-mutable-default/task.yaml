@@ -1,0 +1,3 @@
+task_id: fix-mutable-default
+category: coding
+faults_allowed: [provider_503_outage, provider_429_ratelimit, tool_run_tests_error, instruction_misleading_hint]
