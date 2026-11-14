@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import {
   agents,
   mockFixtures,
@@ -6,6 +6,7 @@ import {
   type DashboardFixture,
   type FixtureState,
 } from './mocks/fixtures'
+import { loadLive, type LiveData } from './api/live'
 import FixtureNotice from './components/FixtureNotice'
 import RunDetailPage from './components/RunDetail'
 import type { ResilienceRow, ResultRow, RunDetail } from './types'
@@ -100,17 +101,66 @@ function withQuery(changes: Record<string, string | null>) {
   return routeHref(window.location.pathname, changes)
 }
 
+
+type LiveStatus = 'loading' | 'error' | 'ready'
+
+function useLive(enabled: boolean, benchmarkId: string | null, runId: string | null) {
+  const [status, setStatus] = useState<LiveStatus>('loading')
+  const [data, setData] = useState<LiveData | undefined>()
+  const [message, setMessage] = useState('')
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!enabled) return
+    const controller = new AbortController()
+    let timer: number | undefined
+    loadLive(benchmarkId, runId, controller.signal)
+      .then((next) => {
+        // Catalog arrays are shared by the screens; refresh them in place (full reload on mode switch).
+        agents.splice(0, agents.length, ...next.fixture.catalog.agents)
+        scenarios.splice(0, scenarios.length, ...next.scenarios)
+        setData(next)
+        setStatus('ready')
+        const state = next.fixture.benchmark?.state
+        if (state === 'queued' || state === 'running') timer = window.setTimeout(() => setTick((t) => t + 1), 5000)
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return
+        setMessage(error instanceof Error ? error.message : 'Live API request failed.')
+        setStatus('error')
+      })
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [enabled, benchmarkId, runId, tick])
+
+  const benchmark = data?.fixture.benchmark ?? null
+  let state: FixtureState = 'success'
+  if (status === 'loading' && !data) state = 'loading'
+  else if (status === 'error') state = 'error'
+  else if (!benchmark) state = 'empty'
+  else if (benchmark.state === 'halted_spend_cap') state = 'halted'
+  else if (benchmark.state === 'queued' || benchmark.state === 'running') state = 'partial'
+  else if (data?.fixture.results.some((row) => row.infra_excluded > 0)) state = 'infra'
+  return { status, data, message, state }
+}
+
 function App() {
   const route = getRoute(window.location.pathname)
   const params = new URLSearchParams(window.location.search)
   const requestedState = params.get('state')
-  const fixtureState = isFixtureState(requestedState)
+  const mockState = isFixtureState(requestedState)
     ? requestedState
     : route === 'resilience'
       ? 'fault'
       : 'success'
-  const fixture = mockFixtures[fixtureState]
   const liveMode = params.get('mode') === 'live'
+  const benchmarkParam = params.get('benchmark')
+  const runParam = route === 'run-detail' ? (window.location.pathname.split('/').filter(Boolean)[1] ?? null) : null
+  const live = useLive(liveMode, benchmarkParam, runParam)
+  const fixture = liveMode ? (live.data?.fixture ?? mockFixtures.empty) : mockFixtures[mockState]
+  const fixtureState: FixtureState = liveMode ? live.state : mockState
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -158,7 +208,11 @@ function App() {
                   window.location.href = withQuery({ benchmark: event.target.value })
                 }}
               >
-                {fixture.benchmark ? (
+                {liveMode && live.data && live.data.benchmarks.length > 0 ? (
+                  live.data.benchmarks.map((b) => (
+                    <option key={b.benchmark_id} value={b.benchmark_id}>{b.name}</option>
+                  ))
+                ) : fixture.benchmark ? (
                   <option value={fixture.benchmark.benchmark_id}>{fixture.benchmark.name}</option>
                 ) : (
                   <option value="">No benchmark selected</option>
@@ -166,7 +220,7 @@ function App() {
               </select>
             </label>
           )}
-          <label className="select-control fixture-select">
+          {!liveMode && <label className="select-control fixture-select">
             <span>Fixture state</span>
             <select
               aria-label="Select mock fixture state"
@@ -179,7 +233,7 @@ function App() {
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-          </label>
+          </label>}
           <a
             className={`mode-switch${liveMode ? ' is-live' : ''}`}
             href={withQuery({ mode: liveMode ? null : 'live' })}
@@ -191,18 +245,21 @@ function App() {
 
       <div className="workspace">
         <div className="mock-ribbon" role="status">
-          {liveMode ? 'LIVE API NOT CONNECTED' : 'MOCK DATA — illustrative fixtures, not benchmark results'}
+          {liveMode
+            ? live.status === 'error'
+              ? 'LIVE API UNAVAILABLE'
+              : 'LIVE — data from the AgentArena API'
+            : 'MOCK DATA — illustrative fixtures, not benchmark results'}
         </div>
         <main id="main-content" className="main-sheet">
-          {liveMode ? (
-            <LiveUnavailable />
-          ) : (
-            <RouteView
-              route={route}
-              fixture={fixture}
-              fixtureState={fixtureState}
-            />
+          {liveMode && live.status === 'error' && (
+            <div className="notice notice-warning" role="alert">{live.message}</div>
           )}
+          <RouteView
+              route={route}
+            fixture={fixture}
+            fixtureState={fixtureState}
+          />
         </main>
       </div>
       <footer className="app-footer">
@@ -1424,19 +1481,6 @@ function Limitations() {
   )
 }
 
-function LiveUnavailable() {
-  return (
-    <section className="live-unavailable" aria-labelledby="live-title">
-      <p className="status-pill status-warning">Live mode</p>
-      <h1 id="live-title">Live API is not connected</h1>
-      <p>
-        This scaffold does not make live requests. No fixture data is shown in live mode, so
-        illustrative values cannot be mistaken for measured results.
-      </p>
-      <a className="button button-primary" href={withQuery({ mode: null })}>Return to mock data</a>
-    </section>
-  )
-}
 
 function EmptyState({
   title,

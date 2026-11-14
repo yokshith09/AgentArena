@@ -16,5 +16,4 @@ npm run dev
 
 The default is mock mode, with a persistent MOCK DATA ribbon. The fixture-state selector switches
 between completed, empty, INFRA exclusion, injected fault, partial, spend-cap-halted, loading, and
-error examples. These are illustrative fixtures, not benchmark results. Live mode intentionally
-shows an unavailable message and does not render fixtures until API wiring is implemented.
+error examples. These are illustrative fixtures, not benchmark results. Live mode (`?mode=live`, header toggle) reads the real API (`VITE_API_BASE`, default `http://localhost:8000`; start it with `docker compose up -d api`), shows no fixtures, and polls every 5 s while a benchmark is queued or running. Run detail and trace are fetched only for the run being viewed.

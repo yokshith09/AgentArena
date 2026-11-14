@@ -44,7 +44,7 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-27 | Docs | Fresh-clone walkthrough of README quickstart on a clean machine/user | C + reviewer | P0 | not run |
 | T-28 | Generator | Mutation-generated task passes validator; weak task flagged | A | P0 | not run |
 | T-29 | E2E smoke | `docker compose up` + tiny benchmark (1 agent, 1 task, N=1, `mock_llm` upstream) → run PASS in DB → visible in UI | all | P0 | not run |
-| T-30 | Contracts | `db/fixtures` load into DB; fixtures ↔ `frontend/mocks` ↔ API models consistent | A + C | P0 | not run |
+| T-30 | Contracts | `db/fixtures` load into DB; fixtures ↔ `frontend/mocks` ↔ API models consistent | A + C | P0 | partial: frontend fixtures vs API models pass (`tests/contracts`); `db/fixtures` load not run (no Postgres) |
 
 ## 3. Cross-cutting checks
 - **Secrets scan** before submission (NFR-05). Owner: A. 

@@ -251,7 +251,7 @@ const completedRuns = [
   makeRun('77777777-7777-4777-8777-777777777777', 'agent-b-openai-agents', 3, 'FAIL', {
     cost: 0.0038,
     duration: 34,
-    steps: 7.2,
+    steps: 7,
     tool_calls: 8,
   }),
   makeRun('88888888-8888-4888-8888-888888888888', 'agent-c-test-retry', 1, 'PASS', {
