@@ -48,7 +48,7 @@ Priority follows the plan's cut line (D-12): **P0** = Stages 0-8, 10, 15 (must s
 |---|---|---|
 | NFR-01 | Contracts frozen at CP0; after that changes are additive-only unless all three owners ack ([10](10-integration-contracts.md) §6) | Contract change log |
 | NFR-02 | Every component runnable and testable alone using mocks ([10](10-integration-contracts.md) §4) | T-01…T-10 |
-| NFR-03 | Proxy overhead per call is small relative to LLM latency (target < 50 ms added, to be measured; **not yet measured**) | T-03 |
+| NFR-03 | Proxy overhead per call is small relative to LLM latency (target < 50 ms added; measured +17.3 ms median against `mock_llm` on 2026-11-14, T-03) | T-03 |
 | NFR-04 | Dashboard loads leaderboard for a 2-agent × 5-task × 3-run benchmark in < 2 s locally (target) | T-18 |
 | NFR-05 | No secrets in repo; provider key only via `.env`; `.env.example` committed | Review at CP4 |
 | NFR-06 | Results are explicit statistics: every aggregate shows n and interval; INFRA exclusions are visible | UI test T-17 |
