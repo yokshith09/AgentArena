@@ -19,7 +19,7 @@ Behaviour
 3. If `stream=true` and request lacks `stream_options.include_usage`, add it (A-02); stream chunks through to the client.
 4. Forward to Bifrost; measure latency (ms).
 5. Write `llm_call` event (status code, model, tokens_in/out, cost, cost_confidence, finish_reason); write one `tool_call` event per entry in `choices[].message.tool_calls` (or streamed equivalent).
-6. Cost = tokens × `pricing.yaml` entry effective on the run date; missing `usage` → `estimated` via tokenizer (A-08, P1; P0 may store `null` tokens + `cost_confidence=estimated` with cost 0 and a warning event).
+6. Cost = tokens × `pricing.yaml` entry effective on the run date; missing `usage` → `estimated` via tokenizer (A-08, P1; P0 stores `null` tokens + `null` cost + `cost_confidence=estimated` and a warning: an unknown cost must not be recorded as 0, because the stats engine averages recorded costs).
 
 States: n/a (stateless; run state owned by orchestrator).
 Errors: unknown/finished `run_id` → 404 (OpenAI-shaped error body); upstream unreachable/5xx not injected → pass status through and tag the `llm_call.error` as `upstream` so the orchestrator can classify INFRA_ERROR; DB write failure → request still forwarded, error logged to stderr (never block the agent).

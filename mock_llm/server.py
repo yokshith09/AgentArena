@@ -19,7 +19,11 @@ PATH = re.compile(r"^(/runs/[^/]+)?/v1/chat/completions$")
 
 def load(path=None):
     path = path or os.environ.get("MOCK_SCRIPT")
-    s = json.load(open(path)) if path else DEFAULT
+    if path:
+        with open(path, encoding="utf-8") as script_file:
+            s = json.load(script_file)
+    else:
+        s = DEFAULT
     STATE.update(i=0, script=s, fail=dict(s.get("fail_next") or {"n": 0, "status": 503}))
 
 
@@ -57,7 +61,8 @@ class H(BaseHTTPRequestHandler):
             if STATE["fail"]["n"] > 0:
                 STATE["fail"]["n"] -= 1
                 return self._send(STATE["fail"]["status"], {"error": {"message": "mock failure", "type": "server_error"}})
-            r = STATE["script"]["responses"][STATE["i"] % len(STATE["script"]["responses"])]
+            response_index = STATE["i"]
+            r = STATE["script"]["responses"][response_index % len(STATE["script"]["responses"])]
             STATE["i"] += 1
         msg = {"role": "assistant", "content": r.get("text")}
         finish = "stop"
@@ -65,7 +70,7 @@ class H(BaseHTTPRequestHandler):
             msg["content"] = None
             finish = "tool_calls"
             msg["tool_calls"] = [
-                {"id": f"call_{k}", "type": "function",
+                {"id": f"call_{response_index}_{k}", "type": "function",
                  "function": {"name": c["name"], "arguments": c.get("arguments", "{}")}}
                 for k, c in enumerate(r["tool_calls"])
             ]
@@ -96,7 +101,7 @@ class H(BaseHTTPRequestHandler):
 
 def serve(port=None):
     load()
-    return ThreadingHTTPServer(("0.0.0.0", int(port if port is not None else os.environ.get("MOCK_PORT", 9000))), H)
+    return ThreadingHTTPServer(("0.0.0.0", int(port if port is not None else os.environ.get("MOCK_PORT", "9000"))), H)
 
 
 if __name__ == "__main__":

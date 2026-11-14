@@ -1,9 +1,37 @@
+import gc
 import json
+import os
+import tempfile
 import threading
+import unittest
 import urllib.error
 import urllib.request
+import warnings
 
 import server
+
+
+class MockLLMTests(unittest.TestCase):
+    def test_load_closes_script_file(self):
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as script_file:
+            json.dump({"responses": [{"text": "test"}]}, script_file)
+            script_path = script_file.name
+
+        original_state = dict(server.STATE)
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", ResourceWarning)
+                server.load(script_path)
+                gc.collect()
+
+            self.assertFalse(any(
+                issubclass(warning.category, ResourceWarning)
+                for warning in caught
+            ))
+        finally:
+            server.STATE.clear()
+            server.STATE.update(original_state)
+            os.unlink(script_path)
 
 
 def post(port, path, body):

@@ -1,4 +1,5 @@
 -r requirements.txt
+-r agents/requirements.txt
 
 # Test and lint tooling.
 hypothesis==6.170.15

@@ -2,6 +2,8 @@
 
 **Purpose:** The working checklist for DEV-A. Start each DEV-A task here, record progress here, and keep the shared [task board](14-task-board.md) and [test catalog](09-testing-and-demo.md) in sync. This file tracks ownership and completion; interface details remain authoritative in docs 07, 08, and 10.
 
+**Role:** DEV-A — Platform.
+**Last updated:** 2026-11-12.
 **Role:** DEV-A — Platform.  
 **Last updated:** 2026-11-14.
 **Project state at tracker creation:** The Git repository is initialized on `main` with a clean worktree and `.env` is ignored. The application/source skeleton, `.env.example`, and dependency manifests are not present. The project is still at the documentation/foundation stage; no implementation tasks are considered done based on documentation alone.
@@ -52,7 +54,7 @@ The order above is the practical dependency order, not permission to bypass the 
 - [x] Check `.gitignore` covers secrets, local environments, caches, and generated artifacts without ignoring needed source.
 - [x] Scan for common credential patterns and confirm the bootstrap tree is ready for parallel work.
 
-**Acceptance:** Required folders/files exist, `.env` remains ignored, `.env.example` is safe, dependency setup is reproducible, and secrets scan is clean.  
+**Acceptance:** Required folders/files exist, `.env` remains ignored, `.env.example` is safe, dependency setup is reproducible, and secrets scan is clean.
 **Tests/evidence:** `git diff --check` passed; `pyproject.toml` parses; `pip install --dry-run -r requirements-dev.txt` resolves; `.env` is ignored and `.env.example` is trackable; common credential-pattern scan found no matches. Update X2 on the shared board after review/integration.
 
 ### 2. X1 — Sign off contracts and resolve/default open questions
@@ -78,7 +80,7 @@ The order above is the practical dependency order, not permission to bypass the 
 - [ ] Keep credentials in local `.env`; ensure they are not passed into agent containers.
 - [ ] Verify `docker compose up` starts Postgres and Bifrost; document health/readiness and stop procedure.
 
-**Acceptance:** Compose starts the required M0 services; ports and configuration are documented; no secrets are committed.  
+**Acceptance:** Compose starts the required M0 services; ports and configuration are documented; no secrets are committed.
 **Tests/evidence:** Compose smoke start/stop and service health output.
 
 ### 4. A2 — Database migration and fabricated fixtures
@@ -90,6 +92,8 @@ The order above is the practical dependency order, not permission to bypass the 
 - [x] Add fabricated, clearly labelled fixtures under `db/fixtures`; never represent fixtures as benchmark results.
 - [x] Exercise insert/read of a fake run and its events; check schema/state constraints and fixture load.
 
+**Acceptance:** Tables and constraints match doc 07; migrations and fixtures load; run/event insert-read works.
+**Tests/evidence:** Migration/fixture command output and T-30 database-load result.
 **Acceptance:** Tables and constraints match doc 07; migrations and fixtures load; run/event insert-read works.  
 **Tests/evidence:** Migration/fixture command output and T-30 database-load result.  
 **Evidence (2026-11-14):** `db/check_db.py` → `db OK`. `pytest tests/db` → 12 passed (fresh DB gets full schema, idempotent re-run, initdb-created DB recognised, new files applied in numeric order, failing file rolled back and stops, dry run, CLI exit codes 0/1/2, bad names). Compose: existing volume → `up to date (1 applied)`, exit 0, proxy starts after it; fresh volume (separate project) → `applying 001_init`, 6 tables, then `up to date`.
@@ -104,7 +108,7 @@ The order above is the practical dependency order, not permission to bypass the 
 - [ ] Verify both `/v1/...` and proxy-shaped development paths work.
 - [ ] Document invocation/script format in doc 10 and the component README when created.
 
-**Acceptance:** Mock answers scripted calls, streams, tool calls, usage, and configured failures reproducibly.  
+**Acceptance:** Mock answers scripted calls, streams, tool calls, usage, and configured failures reproducibly.
 **Tests/evidence:** Curl smoke checks and use from T-01.
 
 ### 6. A1 — Verify Bifrost/provider and record prices
@@ -132,6 +136,8 @@ The order above is the practical dependency order, not permission to bypass the 
 - [x] Ensure a DB write failure is surfaced to logs but does not prevent forwarding to the agent.
 - [x] Implement `X-Agent-Role` event attribution as specified.
 
+**Acceptance:** Behavior conforms to docs 07/08; DB failure does not block forwarding; T-01…T-05 pass.
+**Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.
 **Acceptance:** Behavior conforms to docs 07/08; DB failure does not block forwarding; T-01…T-05 pass.  
 **Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.  
 **Tests/evidence (2026-11-14):** `pytest tests/proxy` → 18 passed (T-01, T-02, T-04 stream+non-stream, T-05 incl. finished run, upstream 5xx/unreachable, DB down; headers, missing usage, unpriced model, truncation, other endpoints). T-03 live: median +17.3 ms. Compose smoke: `docker compose --profile mock up -d --build proxy mock_llm` → stream + non-stream curl stored 2 `llm_call` events (8/11 tokens), unknown run → 404. Event writes are a single multi-row INSERT; a BEGIN/executemany/COMMIT version added ~50 ms per call on Windows.

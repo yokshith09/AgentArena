@@ -1,6 +1,6 @@
 # AgentArena · Documentation Pack
 
-Status: **Draft for CP0 sign-off (2026-11-11).** Documentation only — no code exists yet.
+Status: **Draft for CP0 sign-off (2026-11-11).** The documentation describes the target system; foundation implementation is underway. Current task status is tracked in [14 · Task Board](14-task-board.md).
 
 ## Read order by role
 

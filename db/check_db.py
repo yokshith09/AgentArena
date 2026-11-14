@@ -8,7 +8,8 @@ dsn = os.environ.get("DATABASE_URL", "postgresql://arena:arena@localhost:5432/ar
 RUN = "22222222-2222-4222-8222-222222222222"
 with psycopg.connect(dsn, autocommit=True) as c:
     c.execute("TRUNCATE events, runs, benchmarks, tasks, agents CASCADE")
-    c.execute(open(os.path.join(os.path.dirname(__file__), "fixtures", "fixture.sql"), encoding="utf8").read())
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "fixture.sql"), encoding="utf8") as fixture:
+        c.execute(fixture.read())
     n = c.execute("SELECT count(*) FROM events WHERE run_id=%s", (RUN,)).fetchone()[0]
     assert n == 4, n
     assert c.execute("SELECT 1 FROM runs WHERE status='INFRA_ERROR' AND state='done'").fetchone()

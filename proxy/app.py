@@ -165,8 +165,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 else:
                     confidence = "verified"
             else:
-                # F-01 step 6, P0 rule: null tokens, cost 0, estimated, plus a warning.
-                cost, confidence = 0.0, "estimated"
+                # F-01 step 6: unknown, not free. Null tokens and null cost (the stats engine skips nulls,
+                # so an unknown cost never drags averages toward 0), estimated, plus a warning.
+                cost, confidence = None, "estimated"
                 warning = "upstream response had no usage block"
             if warning:
                 log.warning("run %s: %s", run_id, warning)
