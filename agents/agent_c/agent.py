@@ -1,4 +1,5 @@
-"""Agent C: Agent A's minimal loop with a test-retry-focused prompt."""
+"""Agent C: Agent A's minimal loop plus resilience: code-level retry of transient LLM errors
+(429/5xx/timeouts, honouring Retry-After) and a test-retry-focused prompt."""
 
 from __future__ import annotations
 
@@ -8,12 +9,14 @@ from pathlib import Path
 from typing import Any
 
 AGENT_ROLE = "agent-c-test-retry"
+LLM_RETRIES = 3  # extra attempts after the first, on 429/5xx/connection/timeout
 SYSTEM_PROMPT = """\
 You are Agent C, a coding agent working only in the supplied task workspace.
-Use read_file to inspect files, write_file to make changes, and run_tests to
+Use list_files to see the workspace, read_file to inspect files, write_file to make changes, and run_tests to
 execute the workspace's pytest suite. Never request or modify paths outside the
 workspace. If run_tests returns an error, inspect the result and retry it up to
-two more times before deciding how to proceed. Do not retry model/network errors.
+two more times before deciding how to proceed. Transient model/network errors are
+retried automatically for you.
 Continue until the requested task is complete and tests have run.
 """
 
@@ -33,7 +36,7 @@ AGENT_A = _load_agent_a()
 
 
 def main() -> int:
-    return AGENT_A.main(SYSTEM_PROMPT, AGENT_ROLE)
+    return AGENT_A.main(SYSTEM_PROMPT, AGENT_ROLE, LLM_RETRIES)
 
 
 if __name__ == "__main__":

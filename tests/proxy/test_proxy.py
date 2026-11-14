@@ -227,12 +227,12 @@ def test_headers_rewritten_for_upstream(client, run_id):
     assert "authorization" not in seen and "x-agent-role" not in seen
 
 
-def test_missing_usage_is_estimated_zero_cost(client, conn, run_id):
+def test_missing_usage_is_estimated_null_cost(client, conn, run_id):
     stub_upstream(client, lambda req: httpx.Response(
         200, json={"model": "mock-model", "choices": [{"message": {"content": "x"}, "finish_reason": "stop"}]}))
     assert client.post(f"/runs/{run_id}/v1/chat/completions", json=chat()).status_code == 200
     p = events(conn, run_id)[0]["payload"]
-    assert (p["tokens_in"], p["tokens_out"], p["cost"], p["cost_confidence"]) == (None, None, 0.0, "estimated")
+    assert (p["tokens_in"], p["tokens_out"], p["cost"], p["cost_confidence"]) == (None, None, None, "estimated")
     assert "usage" in p["warning"]
 
 

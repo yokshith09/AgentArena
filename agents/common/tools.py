@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -10,7 +11,11 @@ from pathlib import Path
 from typing import Any
 
 MAX_TOOL_OUTPUT = 12_000
+TAIL_HEAD_CHARS = 2_000  # of MAX_TOOL_OUTPUT, kept from the start of long command output
+MAX_LISTED_FILES = 500
+IGNORED_DIRS = {".git", "__pycache__", ".pytest_cache", "node_modules", ".venv", "venv"}
 TEST_TIMEOUT_SECONDS = 60
+DEFAULT_TEMPERATURE = 0.0
 
 
 class ToolError(Exception):
@@ -56,6 +61,32 @@ def load_tool_fault(raw_value: str | None) -> ToolFault | None:
     return ToolFault(tool, fail_first_n, message)
 
 
+def temperature_from_env(raw_value: str | None) -> float | None:
+    """ARENA_TEMPERATURE: unset -> 0.0 (repeatability); empty string -> None (omit the parameter,
+    for models that reject it); otherwise a number between 0 and 2."""
+    if raw_value is None:
+        return DEFAULT_TEMPERATURE
+    if not raw_value.strip():
+        return None
+    try:
+        value = float(raw_value)
+    except ValueError as error:
+        raise ToolError("ARENA_TEMPERATURE must be a number or empty") from error
+    if not 0.0 <= value <= 2.0:
+        raise ToolError("ARENA_TEMPERATURE must be between 0 and 2")
+    return value
+
+
+def keep_tail(text: str) -> str:
+    """Bound command output but keep its END: pytest prints the failure summary last."""
+    if len(text) <= MAX_TOOL_OUTPUT:
+        return text
+    tail_chars = MAX_TOOL_OUTPUT - TAIL_HEAD_CHARS
+    omitted = len(text) - MAX_TOOL_OUTPUT
+    marker = f"\n[... {omitted} characters omitted ...]\n"
+    return text[:TAIL_HEAD_CHARS] + marker + text[-tail_chars:]
+
+
 def workspace_file(workspace: Path, relative_path: str) -> Path:
     if not relative_path or "\x00" in relative_path or Path(relative_path).is_absolute():
         raise ToolError("path must be a non-empty relative path inside the workspace")
@@ -80,6 +111,25 @@ def read_file(workspace: Path, relative_path: str) -> str:
     if len(content) > MAX_TOOL_OUTPUT:
         return content[:MAX_TOOL_OUTPUT] + "\n[truncated]"
     return content
+
+
+def list_files(workspace: Path) -> dict[str, Any]:
+    root = workspace.resolve()
+    files: list[str] = []
+    truncated = False
+    for current, dirs, names in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in IGNORED_DIRS and not (Path(current) / d).is_symlink())
+        for name in sorted(names):
+            path = Path(current) / name
+            if path.is_symlink():
+                continue
+            if len(files) >= MAX_LISTED_FILES:
+                truncated = True
+                break
+            files.append(path.relative_to(root).as_posix())
+        if truncated:
+            break
+    return {"ok": True, "files": sorted(files), "truncated": truncated}
 
 
 def write_file(workspace: Path, relative_path: str, content: str) -> dict[str, Any]:
@@ -119,8 +169,8 @@ def run_tests(workspace: Path, fault: ToolFault | None = None) -> dict[str, Any]
             "ok": False,
             "timed_out": True,
             "timeout_seconds": TEST_TIMEOUT_SECONDS,
-            "stdout": _text_output(error.stdout)[:MAX_TOOL_OUTPUT],
-            "stderr": _text_output(error.stderr)[:MAX_TOOL_OUTPUT],
+            "stdout": keep_tail(_text_output(error.stdout)),
+            "stderr": keep_tail(_text_output(error.stderr)),
         }
     except OSError as error:
         return {"ok": False, "error": f"could not start pytest: {error}"}
@@ -129,8 +179,8 @@ def run_tests(workspace: Path, fault: ToolFault | None = None) -> dict[str, Any]
         "ok": result.returncode == 0,
         "timed_out": False,
         "exit_code": result.returncode,
-        "stdout": result.stdout[:MAX_TOOL_OUTPUT],
-        "stderr": result.stderr[:MAX_TOOL_OUTPUT],
+        "stdout": keep_tail(result.stdout),
+        "stderr": keep_tail(result.stderr),
     }
 
 
@@ -155,6 +205,8 @@ def execute_tool(
             if not isinstance(path, str) or not isinstance(content, str):
                 raise ToolError("path and content must be strings")
             return json.dumps(write_file(workspace, path, content))
+        if name == "list_files":
+            return json.dumps(list_files(workspace))
         if name == "run_tests":
             return json.dumps(run_tests(workspace, fault))
         return json.dumps({"ok": False, "error": f"unsupported tool: {name}"})

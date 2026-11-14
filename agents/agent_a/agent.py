@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -13,16 +14,31 @@ from urllib.request import Request, urlopen
 
 MAX_TURNS = 12
 REQUEST_TIMEOUT_SECONDS = 30
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+MAX_RETRY_DELAY_SECONDS = 30.0
+_sleep = time.sleep  # replaced in tests
 AGENT_ROLE = "agent-a-plain"
 
 SYSTEM_PROMPT = """\
 You are Agent A, a coding agent working only in the supplied task workspace.
-Use read_file to inspect files, write_file to make changes, and run_tests to
+Use list_files to see the workspace, read_file to inspect files, write_file to make changes, and run_tests to
 execute the workspace's pytest suite. Never request or modify paths outside the
 workspace. Continue until the requested task is complete and tests have run.
 """
 
 TOOLS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "list_files",
+            "description": "List the files in the task workspace (relative paths).",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+        },
+    },
     {
         "type": "function",
         "function": {
@@ -93,6 +109,41 @@ def _required_env(name: str) -> str:
     return value
 
 
+def _retry_delay(error: HTTPError | None, attempt: int) -> float:
+    """Seconds to wait before retry number `attempt` (0-based): Retry-After if sent, else 1, 2, 4... s."""
+    if error is not None:
+        raw = error.headers.get("Retry-After") if error.headers else None
+        try:
+            if raw is not None:
+                return min(max(float(raw), 0.0), MAX_RETRY_DELAY_SECONDS)
+        except ValueError:
+            pass
+    return min(float(2 ** attempt), MAX_RETRY_DELAY_SECONDS)
+
+
+def _send_with_retries(request: Request, retries: int) -> bytes:
+    """POST once, then up to `retries` more times on transient failures (429/5xx, connection, timeout).
+    Agent A uses retries=0 on purpose: it is the no-resilience baseline the benchmark compares against."""
+    for attempt in range(retries + 1):
+        error_http: HTTPError | None = None
+        try:
+            with urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+                return response.read()
+        except HTTPError as error:
+            details = error.read().decode("utf-8", errors="replace")[:2_000]
+            message = f"LLM endpoint returned HTTP {error.code}: {details}"
+            transient = error.code in RETRYABLE_STATUS
+            error_http = error
+        except URLError as error:
+            message, transient = f"LLM endpoint request failed: {error.reason}", True
+        except TimeoutError:
+            message, transient = "LLM endpoint request timed out.", True
+        if not transient or attempt >= retries:
+            raise AgentError(message)
+        _sleep(_retry_delay(error_http, attempt))
+    raise AgentError("unreachable")  # pragma: no cover
+
+
 def _request_completion(
     base_url: str,
     api_key: str,
@@ -100,14 +151,19 @@ def _request_completion(
     model: str,
     messages: list[dict[str, Any]],
     agent_role: str,
+    temperature: float | None = None,
+    retries: int = 0,
 ) -> dict[str, Any]:
     endpoint = f"{base_url.rstrip('/')}/chat/completions"
-    payload = json.dumps({
+    body: dict[str, Any] = {
         "model": model,
         "messages": messages,
         "tools": TOOLS,
         "tool_choice": "auto",
-    }).encode("utf-8")
+    }
+    if temperature is not None:
+        body["temperature"] = temperature
+    payload = json.dumps(body).encode("utf-8")
     request = Request(
         endpoint,
         data=payload,
@@ -120,16 +176,7 @@ def _request_completion(
         method="POST",
     )
 
-    try:
-        with urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
-            response_body = response.read()
-    except HTTPError as error:
-        details = error.read().decode("utf-8", errors="replace")[:2_000]
-        raise AgentError(f"LLM endpoint returned HTTP {error.code}: {details}") from error
-    except URLError as error:
-        raise AgentError(f"LLM endpoint request failed: {error.reason}") from error
-    except TimeoutError as error:
-        raise AgentError("LLM endpoint request timed out.") from error
+    response_body = _send_with_retries(request, retries)
 
     try:
         data = json.loads(response_body)
@@ -174,6 +221,7 @@ def _tool_result(
 def run_agent(
     system_prompt: str = SYSTEM_PROMPT,
     agent_role: str = AGENT_ROLE,
+    llm_retries: int = 0,
 ) -> int:
     task_prompt = _required_env("TASK_PROMPT")
     workspace = Path(_required_env("WORKSPACE")).resolve()
@@ -191,6 +239,10 @@ def run_agent(
         tool_fault = SHARED_TOOLS.load_tool_fault(os.environ.get("ARENA_TOOL_FAULT", ""))
     except SHARED_TOOLS.ToolError as error:
         raise AgentError(str(error)) from error
+    try:
+        temperature = SHARED_TOOLS.temperature_from_env(os.environ.get("ARENA_TEMPERATURE"))
+    except SHARED_TOOLS.ToolError as error:
+        raise AgentError(str(error)) from error
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": task_prompt},
@@ -198,7 +250,7 @@ def run_agent(
 
     for _ in range(MAX_TURNS):
         message = _request_completion(
-            base_url, api_key, run_id, model, messages, agent_role,
+            base_url, api_key, run_id, model, messages, agent_role, temperature, llm_retries,
         )
         tool_calls = message.get("tool_calls")
         if isinstance(tool_calls, list) and tool_calls:
@@ -218,9 +270,10 @@ def run_agent(
 def main(
     system_prompt: str = SYSTEM_PROMPT,
     agent_role: str = AGENT_ROLE,
+    llm_retries: int = 0,
 ) -> int:
     try:
-        return run_agent(system_prompt, agent_role)
+        return run_agent(system_prompt, agent_role, llm_retries)
     except AgentError as error:
         print(f"Agent error: {error}", file=sys.stderr)
         return 1

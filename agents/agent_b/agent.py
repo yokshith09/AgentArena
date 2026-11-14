@@ -11,12 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from agents.decorators import tool
-from agents.exceptions import ModelBehaviorError, ModelRefusalError, ModelTimeoutError, UserError
+from agents.exceptions import AgentsException
 from openai import OpenAIError
 
 from agents import (
     Agent,
     AsyncOpenAI,
+    ModelSettings,
     OpenAIChatCompletionsModel,
     Runner,
     set_tracing_disabled,
@@ -28,7 +29,7 @@ AGENT_ROLE = "agent-b-openai-agents"
 
 SYSTEM_PROMPT = """\
 You are Agent B, a coding agent working only in the supplied task workspace.
-Use read_file to inspect files, write_file to make changes, and run_tests to
+Use list_files to see the workspace, read_file to inspect files, write_file to make changes, and run_tests to
 execute the workspace's pytest suite. Never request or modify paths outside the
 workspace. Continue until the requested task is complete and tests have run.
 """
@@ -66,6 +67,11 @@ def _tool_error(error: Exception) -> str:
 
 def _create_tools(workspace: Path, fault: Any) -> list[Any]:
     @tool
+    def list_files() -> str:
+        """List the files in the task workspace (relative paths)."""
+        return json.dumps(SHARED_TOOLS.list_files(workspace))
+
+    @tool
     def read_file(path: str) -> str:
         """Read a UTF-8 file from the task workspace."""
         try:
@@ -88,7 +94,7 @@ def _create_tools(workspace: Path, fault: Any) -> list[Any]:
         result = SHARED_TOOLS.run_tests(workspace, fault)
         return json.dumps(result)
 
-    return [read_file, write_file, run_tests]
+    return [list_files, read_file, write_file, run_tests]
 
 
 async def run_agent() -> int:
@@ -106,6 +112,10 @@ async def run_agent() -> int:
     model_name = _required_env("ARENA_MODEL")
     try:
         tool_fault = SHARED_TOOLS.load_tool_fault(os.environ.get("ARENA_TOOL_FAULT", ""))
+    except SHARED_TOOLS.ToolError as error:
+        raise AgentError(str(error)) from error
+    try:
+        temperature = SHARED_TOOLS.temperature_from_env(os.environ.get("ARENA_TEMPERATURE"))
     except SHARED_TOOLS.ToolError as error:
         raise AgentError(str(error)) from error
     set_tracing_disabled(disabled=True)
@@ -126,6 +136,7 @@ async def run_agent() -> int:
             instructions=SYSTEM_PROMPT,
             model=model,
             tools=_create_tools(workspace, tool_fault),
+            model_settings=ModelSettings(temperature=temperature),
         )
         result = await Runner.run(agent, task_prompt, max_turns=MAX_TURNS)
 
@@ -138,14 +149,7 @@ async def run_agent() -> int:
 def main() -> int:
     try:
         return asyncio.run(run_agent())
-    except (
-        AgentError,
-        ModelBehaviorError,
-        ModelRefusalError,
-        ModelTimeoutError,
-        OpenAIError,
-        UserError,
-    ) as error:
+    except (AgentError, AgentsException, OpenAIError) as error:  # AgentsException: SDK base class (turn limit, refusals, timeouts, ...)
         print(f"Agent B error: {error}", file=sys.stderr)
         return 1
 

@@ -128,7 +128,7 @@ Every payload may include `"truncated": true` when bodies exceed 8 KB (stored te
 1. `steps` = number of `llm_call` events with `status_code` 2xx for the run.
 2. `tool_calls` = number of `tool_call` events (calls the model requested; executed results are not observable in black-box mode).
 3. `duration` = agent process start→exit in seconds; grading time excluded.
-4. `tokens_in/out` = sum over `llm_call` payloads; `cost` = sum of `payload.cost`.
+4. `tokens_in/out` = sum over `llm_call` payloads; `cost` = sum of the non-null `payload.cost` values (a call with unknown usage or price has `null` cost and makes the run `estimated`, so the sum is a lower bound; null is never treated as 0).
 5. `cost_confidence` for a run = `estimated` if **any** `llm_call` was `estimated`, else `verified`.
 6. Statistics exclude rows with `status='INFRA_ERROR'` (D-03) and rows in `state<>'done'`.
 
