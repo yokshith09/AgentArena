@@ -25,7 +25,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — verified 2026-11-14: `python db/check_db.py` → `db OK` on compose Postgres 16 (fixtures load, 4 events read back, status/state + event-type CHECKs reject bad rows, `schema_migrations` = `001_init`). Remaining: apply step for migrations after 001 (initdb runs only on first start); merge to main |
 | 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
 | 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
-| 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | Planned |
+| 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | In progress — implemented on `feat/A4-proxy`; T-01…T-05 pass vs `mock_llm`; compose smoke OK; needs review/merge and a real-Bifrost check once A1 unblocks |
 | 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | Planned |
 | 9 | A6 | Proxy-vs-Bifrost reconciliation | Conditional P0 / M2 | A4, A1, V-03 | Blocked/conditional — determine feasibility after V-03 verification |
 | 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | Planned |
@@ -123,16 +123,17 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Forward agent traffic and persist trustworthy usage events.
 
-- [ ] Implement the agent-facing API and run-state lookup per [08-api-contracts.md](08-api-contracts.md) §2.
-- [ ] Forward requests to Bifrost or `mock_llm`; preserve normal responses; add streaming usage options when required.
-- [ ] Capture model, tokens, latency, cost and confidence; use the versioned pricing table and documented missing-usage behavior.
-- [ ] Persist `llm_call`, `tool_call`, and provider-fault events with documented payload shapes.
-- [ ] Return the documented OpenAI-shaped 404 for an unknown/non-running run.
-- [ ] Ensure a DB write failure is surfaced to logs but does not prevent forwarding to the agent.
-- [ ] Implement `X-Agent-Role` event attribution as specified.
+- [x] Implement the agent-facing API and run-state lookup per [08-api-contracts.md](08-api-contracts.md) §2.
+- [x] Forward requests to Bifrost or `mock_llm`; preserve normal responses; add streaming usage options when required.
+- [x] Capture model, tokens, latency, cost and confidence; use the versioned pricing table and documented missing-usage behavior.
+- [x] Persist `llm_call`, `tool_call`, and provider-fault events (provider-fault events arrive with A7) with documented payload shapes.
+- [x] Return the documented OpenAI-shaped 404 for an unknown/non-running run.
+- [x] Ensure a DB write failure is surfaced to logs but does not prevent forwarding to the agent.
+- [x] Implement `X-Agent-Role` event attribution as specified.
 
 **Acceptance:** Behavior conforms to docs 07/08; DB failure does not block forwarding; T-01…T-05 pass.  
-**Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.
+**Dependencies:** A2 and A3; A1 is needed for real-provider validation but not for mock-based development.  
+**Tests/evidence (2026-11-14):** `pytest tests/proxy` → 18 passed (T-01, T-02, T-04 stream+non-stream, T-05 incl. finished run, upstream 5xx/unreachable, DB down; headers, missing usage, unpriced model, truncation, other endpoints). T-03 live: median +17.3 ms. Compose smoke: `docker compose --profile mock up -d --build proxy mock_llm` → stream + non-stream curl stored 2 `llm_call` events (8/11 tokens), unknown run → 404. Event writes are a single multi-row INSERT; a BEGIN/executemany/COMMIT version added ~50 ms per call on Windows.
 
 ### 8. A5 — Statistics engine and P0 API
 
@@ -256,3 +257,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
 | 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
 | 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
+| 2026-11-14 | A4 measuring proxy implemented on `feat/A4-proxy` (FastAPI, compose service, README); T-01…T-05 pass against `mock_llm`; NFR-03 measured at +17.3 ms median. |
