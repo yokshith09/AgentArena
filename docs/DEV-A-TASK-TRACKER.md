@@ -26,7 +26,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
 | 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
 | 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | Planned |
-| 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | Planned |
+| 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | In progress — implemented on `feat/A5-stats-api`; T-15 + T-16 pass; needs review/merge; re-check against `frontend/mocks` when C1 lands |
 | 9 | A6 | Proxy-vs-Bifrost reconciliation | Conditional P0 / M2 | A4, A1, V-03 | Blocked/conditional — determine feasibility after V-03 verification |
 | 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | Planned |
 | 11 | A13 | Mutation task generator and test-strength score | P0 / M3 | B1, B3 | Planned — coordinate interfaces and generated-task handoff with Dev-B |
@@ -138,14 +138,15 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Deliver server-side statistics and all P0 dashboard API shapes.
 
-- [ ] Implement stats per [03-feature-specs.md](03-feature-specs.md) F-07 and metric definitions in doc 07 §4; do not compute stats in the UI.
-- [ ] Implement Wilson pass-rate intervals and fixed-seed bootstrap intervals, plus mean/median/std and edge cases.
-- [ ] Exclude INFRA_ERROR rows from agent outcome statistics while returning their counts and correct null values.
-- [ ] Implement P0 catalog, benchmark, run/event, results, and resilience endpoints per [08-api-contracts.md](08-api-contracts.md) §3.
-- [ ] Validate request parameters and return the documented error envelope.
+- [x] Implement stats per [03-feature-specs.md](03-feature-specs.md) F-07 and metric definitions in doc 07 §4; do not compute stats in the UI.
+- [x] Implement Wilson pass-rate intervals and fixed-seed bootstrap intervals, plus mean/median/std and edge cases.
+- [x] Exclude INFRA_ERROR rows from agent outcome statistics while returning their counts and correct null values.
+- [x] Implement P0 catalog, benchmark, run/event, results, and resilience endpoints per [08-api-contracts.md](08-api-contracts.md) §3.
+- [x] Validate request parameters and return the documented error envelope.
 - [ ] Validate API responses against canonical fixtures and record generated time, counts, and confidence values accurately.
 
-**Acceptance:** Responses match doc 08; INFRA exclusions/null handling are correct; T-15 and T-16 pass.
+**Acceptance:** Responses match doc 08; INFRA exclusions/null handling are correct; T-15 and T-16 pass.  
+**Tests/evidence (2026-11-14):** `pytest tests/stats tests/api` → 43 passed (Wilson goldens incl. 11/15 = 0.4805–0.8910 matching doc 08 §4, bootstrap fixed seed, n=0/1, INFRA exclusion, progress/spend, launch validation rules, pagination bounds, error envelope, doc 08 §4 payloads vs models). Compose: `docker compose up -d --build api` → all endpoints answer on fixture data; `/docs` 200. Open item: validate `frontend/mocks` once C1 adds them.
 
 ### 9. A6 — Proxy-vs-Bifrost reconciliation (conditional)
 
@@ -256,3 +257,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
 | 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
 | 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
+| 2026-11-14 | A5 stats engine + P0 API implemented on `feat/A5-stats-api` (FastAPI, compose `api` service, README with stats definitions); T-15 and T-16 pass. |

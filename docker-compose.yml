@@ -28,5 +28,20 @@ services:
     ports: ["${MOCK_LLM_PORT:-9000}:9000"]
     volumes: ["./mock_llm:/app:ro"]
 
+  api:   # A5 dashboard REST API + stats (docs/08 section 3); OpenAPI at http://localhost:${API_PORT}/docs
+    build: { context: ., dockerfile: api/Dockerfile }
+    environment:
+      # libpq connection variables (no credentials inside a URL)
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-arena}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-arena}
+      PGDATABASE: ${POSTGRES_DB:-arena}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports: ["${API_PORT:-8000}:8000"]
+    volumes: ["./faults:/app/faults:ro"]   # scenario catalog read at request time
+    depends_on:
+      postgres: { condition: service_healthy }
+
 volumes:
   pgdata:
