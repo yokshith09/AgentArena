@@ -81,16 +81,16 @@ Rules: **single writer per table** — `agents`/`tasks`: seed loader (B) (+ API 
 | Bandit/Semgrep | Static scan of diffs, P1/P2 (F-12) | Optional |
 | Ollama | Local model baseline, P2 (F-15) | Optional |
 
-## 6. Stage-0 verification checklist (not yet done — nothing below is asserted)
+## 6. Stage-0 verification checklist (run 2026-11-14 by DEV-A against Groq via Bifrost)
 
 | ID | Question | Result |
 |---|---|---|
-| V-01 | One chat completion through Bifrost succeeds with chosen provider/model | _pending_ |
-| V-02 | Streaming returns `usage` when `stream_options.include_usage=true` is set | _pending_ |
-| V-03 | How does Bifrost expose per-request logs/metrics; can requests carry a custom ID header? (needed only for FR-22) | Docs say yes: `x-bf-lh-*` headers stored in log metadata, logs API exists; **confirm by smoke test** (A1) |
-| V-04 | Can Bifrost fallback simulate outages? (default: no, our proxy does it, F-10) | _pending_ |
+| V-01 | One chat completion through Bifrost succeeds with chosen provider/model | **Pass** 2026-11-14: `POST /v1/chat/completions`, model `groq/openai/gpt-oss-20b`, 200 with `usage`; no auth header needed once `client.enforce_auth_on_inference=false` (`bifrost/config.json`; port bound to 127.0.0.1). Response `model` drops the provider prefix (`openai/gpt-oss-20b`). Bifrost image pinned by digest. |
+| V-02 | Streaming returns `usage` when `stream_options.include_usage=true` is set | **Pass**: final chunk carries `usage` (also without `include_usage`); through the proxy the streamed call is stored `verified`. |
+| V-03 | How does Bifrost expose per-request logs/metrics; can requests carry a custom ID header? (needed only for FR-22) | **Pass with caveat**: `x-bf-lh-run_id` is stored as `logs.metadata = {"run_id": ...}` with tokens and Bifrost's cost; rows appear a few seconds after the call (async). The `/api/logs` API needs Bifrost dashboard auth (403 without it); the same rows are readable from the mounted `data/bifrost/logs.db` (SQLite). E2E proxy run: tokens identical, cost equal up to our 6-decimal rounding. |
+| V-04 | Can Bifrost fallback simulate outages? (default: no, our proxy does it, F-10) | Not needed: provider faults are injected by our proxy (A7). Not tested. |
 | V-05 | Is Tavily mandatory? | Yes (D-13); exact expectation OQ-14 |
-| V-06 | Exact model name(s) and price/1M tokens for `pricing.yaml` | _pending_ |
+| V-06 | Exact model name(s) and price/1M tokens for `pricing.yaml` | **Done**: `groq/openai/gpt-oss-20b` $0.075 in / $0.30 out; `groq/openai/gpt-oss-120b` $0.15 / $0.60 (Groq docs, read 2026-11-14). Groq's cached-input discount is not modelled. |
 
 ## 7. Deployment (A-04)
 

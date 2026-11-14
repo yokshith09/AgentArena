@@ -133,7 +133,8 @@ Seven things only **people** can answer. For each one: what we need, why, exactl
   - Dollar budget. Sizing formula: `runs = agents × tasks × N × scenarios`, `cost ≈ runs × avg_tokens × price`. Set the spend cap at roughly **2× the estimate for the final benchmark plus a development allowance**, then adjust.
   - Rate limits, if known.
 - **Fallback:** `mock_llm` until the key arrives (A1 stays Blocked). Bifrost also ships a `mocker` plugin for mock responses, which may save work.
-- **Date / By:** pending
+- **Answer (2026-11-14, DEV-A):** provider **Groq** via Bifrost, main model **`groq/openai/gpt-oss-20b`** ($0.075 / $0.30 per 1M tokens), second model `groq/openai/gpt-oss-120b` ($0.15 / $0.60). Key held by Akhil in local `.env` as `GROQ_API_KEY`, passed only to the Bifrost container (`bifrost/config.json` references `env.GROQ_API_KEY`). **Still open:** dollar budget / spend cap and the key's rate-limit tier (Groq free tier limits may slow large benchmarks; real 429s are tagged `upstream` and retried as INFRA).
+- **Date / By:** 2026-11-14 / DEV-A (provider + model + price); budget pending
 
 ### OQ-06 · Bifrost facts (V-01…V-06 in [04](04-trd-architecture.md) §6)
 - **Why:** reconciliation (A6), streaming usage, model naming, outage simulation depend on them.
