@@ -22,7 +22,7 @@ Nothing else starts until its contract (X1) exists. Only one milestone is active
 | Implemented | Git repository exists on `main`; `.env` is ignored. No application source, compose, DB, or tests exist yet. (A hidden `.anchor/` folder is present in the workspace; its origin is not known to this plan and it is ignored.) |
 | In progress | Documentation pack (docs 01–14, README, this roadmap): drafted, **not signed off** (X1). Repo bootstrap X2 is partial: folder skeleton, `.env.example`, and dependency specification remain. |
 | Planned | All tasks in the [board](docs/14-task-board.md) except those below. |
-| Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · A6 (feasibility depends on V-03) · X11 (needs official rubric, OQ-01) · C14 needs a Tavily key (OQ-13). |
+| Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · none of the items depend on the rubric any more · C14 needs a Tavily key (OQ-13). |
 | Unknown | Whether any work from 1–11 Nov exists outside this folder (OQ-12). If it does, re-audit before M0. |
 
 ## 3. Milestones
@@ -66,7 +66,7 @@ Integration is continuous, not final: every milestone ends with an integration t
 
 ## 5. Judging criteria → feature → evidence → demo point
 
-The **official rubric is unknown** (OQ-01); the left column is the derived goal set G1–G8 ([docs/01](docs/01-hackathon-strategy.md) §2). Task X11 swaps in the official criteria without changing the rest. Demo order = the order in which evidence is shown; detailed criteria in [docs/09](docs/09-testing-and-demo.md) §4.
+**Official judging criteria (hackathon rules, 2026-11-12):** Innovation · Technical execution · Problem and potential impact · Use of AI · User experience · Scalability and potential. No weights were given. Official-criteria trace: [docs/13](docs/13-traceability.md) (bottom table). The table below keeps the derived G1-G8 order used for the demo walkthrough; the five mandatory requirements of Problem 02 are covered by rows 2-5.
 
 | Order | Criterion (derived) | Feature | Test / evidence | Demo point |
 |---|---|---|---|---|

@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "task_id",
+    "category",
+    "prompt",
+    "workspace",
+    "grader",
+    "reference_solution",
+    "faults_allowed"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "workspace": {
+      "type": "string"
+    },
+    "grader": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "config": {
+          "type": "object"
+        }
+      }
+    },
+    "reference_solution": {
+      "type": "string"
+    },
+    "faults_allowed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Task"
+}

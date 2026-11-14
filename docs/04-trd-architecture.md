@@ -87,7 +87,7 @@ Rules: **single writer per table** — `agents`/`tasks`: seed loader (B) (+ API 
 |---|---|---|
 | V-01 | One chat completion through Bifrost succeeds with chosen provider/model | _pending_ |
 | V-02 | Streaming returns `usage` when `stream_options.include_usage=true` is set | _pending_ |
-| V-03 | How does Bifrost expose per-request logs/metrics; can requests carry a custom ID header? (needed only for FR-22) | _pending_ |
+| V-03 | How does Bifrost expose per-request logs/metrics; can requests carry a custom ID header? (needed only for FR-22) | Docs say yes: `x-bf-lh-*` headers stored in log metadata, logs API exists; **confirm by smoke test** (A1) |
 | V-04 | Can Bifrost fallback simulate outages? (default: no, our proxy does it, F-10) | _pending_ |
 | V-05 | Is Tavily mandatory? | Yes (D-13); exact expectation OQ-14 |
 | V-06 | Exact model name(s) and price/1M tokens for `pricing.yaml` | _pending_ |

@@ -3,7 +3,7 @@
 **Purpose:** The working checklist for DEV-A. Start each DEV-A task here, record progress here, and keep the shared [task board](14-task-board.md) and [test catalog](09-testing-and-demo.md) in sync. This file tracks ownership and completion; interface details remain authoritative in docs 07, 08, and 10.
 
 **Role:** DEV-A — Platform.  
-**Last updated:** 2026-11-12.
+**Last updated:** 2026-11-14.
 **Project state at tracker creation:** The Git repository is initialized on `main` with a clean worktree and `.env` is ignored. The application/source skeleton, `.env.example`, and dependency manifests are not present. The project is still at the documentation/foundation stage; no implementation tasks are considered done based on documentation alone.
 
 ## Status rules
@@ -21,10 +21,10 @@ Do not mark a task done just because code was written. Record test/evidence link
 |---:|---|---|---|---|---|
 | 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — approved and pushed on DEV-A; awaiting merge to main |
 | 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts/P-02…P-17 and confirms canonical fixtures; Dev-B/Dev-C acknowledgement and open questions remain |
-| 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | Planned |
-| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | Planned |
-| 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Planned |
-| 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget details are still a team question |
+| 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | In progress — postgres/bifrost/mock_llm compose + `pricing.yaml` shell landed from main (7bb2440); proxy/api/orchestrator/frontend services, Bifrost pin and start/stop smoke remain |
+| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — `001_init.sql`, fixtures and `db/check_db.py` landed from main; check not yet run against a live Postgres |
+| 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
+| 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
 | 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | Planned |
 | 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | Planned |
 | 9 | A6 | Proxy-vs-Bifrost reconciliation | Conditional P0 / M2 | A4, A1, V-03 | Blocked/conditional — determine feasibility after V-03 verification |
@@ -62,7 +62,7 @@ The order above is the practical dependency order, not permission to bypass the 
 - [ ] Review schema, HTTP API, and component interfaces in [07-data-schema.md](07-data-schema.md), [08-api-contracts.md](08-api-contracts.md), and [10-integration-contracts.md](10-integration-contracts.md).
 - [ ] Confirm the fixture list and T-30 scope with Dev-B and Dev-C.
 - [ ] Obtain all three developers' acknowledgement; record the contract version and acknowledgements in doc 10's changelog.
-- [ ] Record known answers, explicit defaults, or unresolved blockers and dates in [15-open-questions.md](15-open-questions.md) / [15-open-questions-answered.md](15-open-questions-answered.md).
+- [ ] Record known answers, explicit defaults, or unresolved blockers and dates in [15-open-questions.md](15-open-questions.md).
 - [ ] Do not silently decide another developer's interface; use the documented contract-change process for disagreements.
 
 **Known unresolved DEV-A items:** OQ-05 provider/model/key/budget; OQ-06 runtime smoke tests for streaming usage/auth/logging; OQ-09 collaborator access confirmation; OQ-12 confirmation of any prior external work and `.anchor/` ownership. OQ-08 affects B4 (Dev-B), and OQ-13 affects Tavily (Dev-C), so request answers from the relevant owners rather than assuming them.
@@ -254,3 +254,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-12 | Created from the repository documentation pack; verified Git/bootstrap facts and captured DEV-A task sequence and initial status. |
 | 2026-11-12 | Implemented and verified X2; approved by DEV-A and pushed as commit `1c84fe3`; awaiting merge to main. |
 | 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
+| 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |

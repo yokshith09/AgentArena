@@ -1,5 +1,7 @@
 # 13 · Traceability Matrix
 
+> **Official judging criteria (hackathon rules, 2026-11-12):** Innovation · Technical execution · Problem and potential impact · Use of AI · User experience · Scalability and potential. No weights were given. Official-criteria table is at the end; the derived G1-G8 rows below remain the requirement-level trace.
+>
 > Chain: **Rubric criterion → Requirement → Feature/Story → Component/Owner → Test → Demo evidence.**
 > The official rubric is unknown (OQ-01). "Criterion" = derived goals G1–G8 ([01](01-hackathon-strategy.md) §2). When the rubric arrives, replace the first column; rows stay. Story = the story line inside each feature in [03](03-feature-specs.md). Test results live only in [09](09-testing-and-demo.md).
 
@@ -30,3 +32,17 @@
 | G8 | Tavily tool for research agent (D-13) | F-14 | AG · C (C14), GR · B (B13) | T-11, T-25 | DA-12 | P0 (D-13) |
 
 Coverage check: every FR in [02](02-prd.md) §3 appears above (FR-01…FR-22; FR-21 within FR-07 row). Every P0 test T-01…T-21, T-27, T-29, T-30 appears at least once here or in [09](09-testing-and-demo.md) §2 (T-30 covered under G6 row).
+
+
+## Official judging criteria (D-15) → evidence
+
+| Criterion | What we show | Features | Tests / evidence | Demo point |
+|---|---|---|---|---|
+| Innovation | Agents (not models) measured as black boxes; fault injection + resilience score; model-vs-agent separation (P2); test-strength-flagged tasks | F-01, F-10, F-17 (F-13) | T-20, T-21, T-28; DA-05 | Failure matrix, weak-task flags |
+| Technical execution | Proxy + Bifrost, hardened sandbox, tamper-checked grading, statistics with intervals, resume/spend cap | F-01, F-03, F-04, F-06, F-07 | T-01…T-16, T-29; DA-01, DA-02, DA-07 | Leaderboard with intervals, kill/resume |
+| Problem and potential impact | The five mandatory requirements of Problem 02 (framework independence, consistent evaluation, repeatability, failure testing, inspection and comparison) | all P0 | Coverage in this matrix; DA-02…DA-05 | Walk the five requirements in order |
+| Use of AI | LLM-driven reference agents, Tavily research agent, Bifrost gateway; AI-usage statement in README (rule 2) | F-05, F-14, F-16 | T-11, T-12, DA-12 | Agent traces; README AI-usage section |
+| User experience | Leaderboard, compare, run timeline, failure view; states, a11y | F-09 | T-17…T-19; DA-02…DA-04 | Click-through from leaderboard to a failed run |
+| Scalability and potential | Framework-agnostic adapters (registry modes), parallel orchestrator, pricing/fault catalogs extensible, roadmap (security, multi-agent, replay) | F-11, F-06 (F-12, F-14, F-15) | T-22; DA-10; Limitations/roadmap section | "Add your agent" in one command |
+
+Weights unknown: treat all six as equal; keep at least one visible demo point per criterion.

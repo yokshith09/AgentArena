@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "run_id",
+    "type",
+    "payload"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "ts": {
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "llm_call",
+        "tool_call",
+        "command",
+        "file_write",
+        "net_attempt",
+        "fault_injected"
+      ]
+    },
+    "agent_role": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "latency": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Event"
+}
