@@ -9,11 +9,23 @@ services:
     ports: ["${POSTGRES_PORT:-5432}:5432"]   # set POSTGRES_PORT if a native Postgres already uses 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/migrations:/docker-entrypoint-initdb.d:ro   # runs *.sql on first start only
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arena}"]
       interval: 5s
       retries: 10
+
+  migrate:   # one-shot: applies pending db/migrations in order, then exits (docs/07 section 9)
+    build: { context: ., dockerfile: proxy/Dockerfile }   # reuses the Python + psycopg image
+    command: ["python", "db/migrate.py"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-arena}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-arena}
+      PGDATABASE: ${POSTGRES_DB:-arena}
+    volumes: ["./db:/app/db:ro"]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
 
   bifrost:
     image: maximhq/bifrost   # pin a version tag once smoke test (A1) passes
@@ -35,7 +47,7 @@ services:
     ports: ["${PROXY_PORT:-8001}:8001"]
     volumes: ["./pricing.yaml:/app/pricing.yaml:ro"]   # price edits apply on restart, no rebuild
     depends_on:
-      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
 
   mock_llm:
     image: python:3.12-alpine
