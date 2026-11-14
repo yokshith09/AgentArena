@@ -15,11 +15,11 @@ Pri = priority of the feature tested. Result column is the only place status is 
 
 | ID | Component | What is checked | Owner | Pri | Result |
 |---|---|---|---|---|---|
-| T-01 | PX | Non-stream call via `mock_llm` → one `llm_call` event with correct tokens, cost, `cost_confidence`, latency | A | P0 | not run |
-| T-02 | PX | Streaming call: chunks pass through unchanged; `include_usage` injected; tokens captured | A | P0 | not run |
-| T-03 | PX | Added latency vs direct `mock_llm` measured (NFR-03) | A | P0 | not run |
-| T-04 | PX | Response with N tool calls → N `tool_call` events | A | P0 | not run |
-| T-05 | PX | Unknown/finished `run_id` → 404 OpenAI error; upstream 5xx tagged `error=upstream`; DB down → still forwards | A | P0 | not run |
+| T-01 | PX | Non-stream call via `mock_llm` → one `llm_call` event with correct tokens, cost, `cost_confidence`, latency | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
+| T-02 | PX | Streaming call: chunks pass through unchanged; `include_usage` injected; tokens captured | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
+| T-03 | PX | Added latency vs direct `mock_llm` measured (NFR-03) | A | P0 | pass 2026-11-14: median +17.3 ms (direct 5.6 ms, via proxy 22.9 ms, p90 26.1 ms; 40 calls, uvicorn + `mock_llm` + compose Postgres on Windows host) |
+| T-04 | PX | Response with N tool calls → N `tool_call` events | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`); stream and non-stream |
+| T-05 | PX | Unknown/finished `run_id` → 404 OpenAI error; upstream 5xx tagged `error=upstream`; DB down → still forwards | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
 | T-06 | Validator/TK | Good tasks accepted; task whose broken state passes → rejected; task whose reference fails → rejected; nondeterministic task rejected | B | P0 | not run |
 | T-07 | Grader | Agent edits protected tests → `tamper_detected`, `passed=false`; reference solution → passes | B | P0 | not run |
 | T-08 | Runner | Dummy agent gets all env vars (§2.2); diff captured; timeout kills process tree; cleanup done | B | P0 | not run |
