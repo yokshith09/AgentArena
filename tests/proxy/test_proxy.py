@@ -165,7 +165,7 @@ def test_t04_n_tool_calls_give_n_events(client, conn, run_id, stream):
     assert [e["type"] for e in evs] == ["llm_call", "tool_call", "tool_call"]
     assert [e["payload"]["name"] for e in evs[1:]] == ["read_file", "run_tests"]
     assert evs[1]["payload"]["arguments_preview"] == '{"path": "a.py"}'
-    assert evs[1]["payload"]["call_id"] == "call_0"
+    assert evs[1]["payload"]["call_id"] == "call_0_0"
     assert evs[0]["payload"]["finish_reason"] == "tool_calls"
 
 
