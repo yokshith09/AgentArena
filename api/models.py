@@ -114,7 +114,9 @@ class Event(BaseModel):
     id: int
     run_id: str
     ts: dt.datetime
-    type: Literal["llm_call", "tool_call", "command", "file_write", "net_attempt", "fault_injected"]
+    # agent_started / grader_result: orchestrator lifecycle events (db migration 002).
+    type: Literal["agent_started", "llm_call", "tool_call", "grader_result", "command",
+                  "file_write", "net_attempt", "fault_injected"]
     agent_role: str | None
     payload: dict[str, Any]
     latency: int | None

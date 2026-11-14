@@ -351,3 +351,30 @@ def test_resilience(client):
     assert a1.resilience_score == pytest.approx(0.5 / 0.75, abs=1e-6)
     assert rows["t16-a2"].resilience_score is None                     # baseline pass rate 0
     assert client.get(f"/api/benchmarks/{EMPTY_BID}/resilience").json() == {"items": []}
+
+
+# ---- lifecycle event types (migration 002) ---------------------------------------------------
+def _has_migration_002() -> bool:
+    try:
+        with psycopg.connect(DSN, connect_timeout=2) as c:
+            return c.execute("SELECT 1 FROM schema_migrations WHERE version ="
+                             " '002_event_lifecycle_types'").fetchone() is not None
+    except psycopg.Error:
+        return False
+
+
+@needs_db
+@pytest.mark.skipif(not _has_migration_002(), reason="run db/migrate.py: needs migration 002")
+def test_events_endpoint_returns_lifecycle_event_types(client, seeded):
+    with psycopg.connect(DSN, autocommit=True) as c:
+        rid = str(c.execute("INSERT INTO runs (agent_id, task_id, state, started_at)"
+                            " VALUES ('t16-a1', 't16-t1', 'running', now()) RETURNING run_id").fetchone()[0])
+        c.execute("INSERT INTO events (run_id, type, payload) VALUES"
+                  " (%s, 'agent_started', '{\"task_id\": \"t16-t1\"}'),"
+                  " (%s, 'llm_call', '{\"status_code\": 200}'),"
+                  " (%s, 'grader_result', '{\"passed\": true, \"suite_count\": 2}')", (rid, rid, rid))
+    r = client.get(f"/api/runs/{rid}/events")
+    assert r.status_code == 200, r.text
+    items = [Event.model_validate(e) for e in r.json()["items"]]
+    assert [e.type for e in items] == ["agent_started", "llm_call", "grader_result"]
+    assert items[2].payload == {"passed": True, "suite_count": 2}
