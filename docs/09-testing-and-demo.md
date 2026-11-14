@@ -34,8 +34,8 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-17 | UI | Every screen renders loading/empty/error/success/partial/halted from fixtures; MOCK ribbon visible in mock mode | C | P0 | not run |
 | T-18 | UI+API | Live mode: leaderboard and run trace for a 2×5×3 benchmark; load < 2 s (NFR-04) | C | P0 | not run |
 | T-19 | UI | Accessibility checklist ([05](05-ux-spec.md) §7): keyboard-only pass, focus, contrast spot-check, status not color-only | C | P0 | not run |
-| T-20 | Faults | 503 and 429 faults fire exactly as defined (first N), emit `fault_injected`, are reproducible with same run_id | A | P0 | not run |
-| T-21 | Faults/Stats | Instruction and tool faults applied; resilience score computed per P-16, null on zero baseline | B/A | P0 | not run |
+| T-20 | Faults | 503 and 429 faults fire exactly as defined (first N), emit `fault_injected`, are reproducible with same run_id | A | P0 | pass 2026-11-14 (`tests/proxy/test_faults.py`, 20 tests incl. loader validation and restart mid-run; compose smoke 503×3→200, 429×2→200; branch `feat/A7-provider-faults`) |
+| T-21 | Faults/Stats | Instruction and tool faults applied; resilience score computed per P-16, null on zero baseline | B/A | P0 | partial: resilience part (A) passes in `tests/api::test_resilience` (PR #3); instruction (B8) and tool (C7) faults not run |
 | T-22 | Registry | Register by one command; doctor catches broken manifest and "no proxy traffic" | B | P1 | not run |
 | T-23 | Security | Obedient agent flagged; well-behaved agent not; canary leak detected | B | P2 | not run |
 | T-24 | Model override | Matrix separates agent vs model effect on fixture data | A | P2 | not run |

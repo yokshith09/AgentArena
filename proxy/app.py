@@ -5,7 +5,8 @@ The proxy checks the run is `running`, forwards to UPSTREAM_BASE_URL (Bifrost or
 passes the response through, and writes one `llm_call` event plus one `tool_call` event per
 requested tool call. A database failure never blocks forwarding (fail-open, logged to stderr).
 
-Provider fault injection (A7) plugs in before forwarding, keyed on RunInfo.scenario.
+Provider faults (A7): runs whose scenario is a proxy-layer fault (faults/*.yaml) get their first N
+requests answered by the proxy with the injected error instead of being forwarded.
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
 from .db import Database, Event, RunInfo
+from .faults import ProviderFaults, load_faults
 from .pricing import Pricing
 
 log = logging.getLogger("proxy")
@@ -49,6 +51,7 @@ class Settings:
     # Only if the Bifrost deployment requires a key; never the agent's key.
     upstream_api_key: str = field(default_factory=lambda: os.environ.get("BIFROST_API_KEY", ""))
     upstream_timeout_s: float = 600.0
+    faults_dir: str = field(default_factory=lambda: os.environ.get("FAULTS_DIR", str(ROOT / "faults")))
 
 
 def openai_error(status: int, message: str, type_: str, code: str, headers: dict | None = None):
@@ -124,6 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     pricing = Pricing.load(settings.pricing_file)
     db = Database(settings.database_url)
+    faults = ProviderFaults(load_faults(settings.faults_dir), db.count_injections)  # fails fast
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -135,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="AgentArena measuring proxy", lifespan=lifespan)
     app.state.settings, app.state.pricing, app.state.db = settings, pricing, db
+    app.state.faults = faults
 
     def build_events(*, run_id: str, endpoint: str, req: dict | None, raw_req: bytes, status: int,
                      model: str | None, usage: dict | None, finish_reason: str | None,
@@ -216,8 +221,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 return openai_error(404, f"run {run_id} not found or not running",
                                     "invalid_request_error", "run_not_found")
 
-        # A7 hook: provider faults for run.scenario are applied here, before forwarding.
-
         raw_req = await request.body()
         req_json = None
         if raw_req:
@@ -241,6 +244,37 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if request.url.query:
             url += "?" + request.url.query
         role = request.headers.get("x-agent-role")
+
+        # A7: provider fault for this run's scenario, answered here instead of forwarding.
+        # With the DB down (run unknown) no fault can be looked up, so nothing is injected.
+        if run is not None and (inj := await faults.next(run_id, run.scenario)):
+            t0 = time.perf_counter()
+            f = inj.fault
+            type_ = "rate_limit_error" if f.status == 429 else "server_error"
+            headers_out = ({"Retry-After": str(f.params.get("retry_after", 1))}
+                           if f.status == 429 else None)
+            resp = openai_error(f.status, f"injected fault {f.id}: {inj.detail}", type_,
+                                "injected_fault", headers_out)
+            req_prev, req_cut = preview(raw_req)
+            payload = {
+                "endpoint": "/" + endpoint,
+                "model": req_json.get("model") if isinstance(req_json, dict) else None,
+                "response_model": None, "status_code": f.status, "tokens_in": None,
+                "tokens_out": None, "cost": 0.0, "cost_confidence": "verified",
+                "finish_reason": None, "stream": stream, "request_preview": req_prev,
+                "response_preview": resp.body.decode(), "pricing_version": pricing.version,
+                "fault_id": f.id,
+            }
+            if req_cut:
+                payload["truncated"] = True
+            await write_events(run_id, [
+                Event("fault_injected", {"fault_id": f.id, "group": f.group, "detail": inj.detail},
+                      agent_role=role),
+                Event("llm_call", payload, latency=int((time.perf_counter() - t0) * 1000),
+                      error="injected", agent_role=role),
+            ])
+            return resp
+
         client: httpx.AsyncClient = app.state.client
         common = {"run_id": run_id, "endpoint": endpoint,
                   "req": req_json if isinstance(req_json, dict) else None,

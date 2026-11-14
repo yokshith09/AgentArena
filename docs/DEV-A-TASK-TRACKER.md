@@ -28,7 +28,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | In progress — implemented on `feat/A4-proxy`; T-01…T-05 pass vs `mock_llm`; compose smoke OK; needs review/merge and a real-Bifrost check once A1 unblocks |
 | 8 | A5 | Statistics engine and P0 API | P0 / M2 | A2, X1 | Planned |
 | 9 | A6 | Proxy-vs-Bifrost reconciliation | Conditional P0 / M2 | A4, A1, V-03 | Blocked/conditional — determine feasibility after V-03 verification |
-| 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | Planned |
+| 10 | A7 | Provider fault injection and resilience endpoint | P0 / M3 | A4, A5 | In progress — provider faults on `feat/A7-provider-faults` (T-20 passes, compose smoke OK); resilience endpoint ships with A5 (PR #3); needs review/merge |
 | 11 | A13 | Mutation task generator and test-strength score | P0 / M3 | B1, B3 | Planned — coordinate interfaces and generated-task handoff with Dev-B |
 | 12 | X5 | Milestone 2 compose integration and benchmark smoke | P0 / M2 | A5, B5, B6, C5, C4 | Planned — shared integration task; DEV-A owns the task |
 | 13 | X7 | Freeze and restore demo database | P0 / M4 | X6 | Planned |
@@ -163,13 +163,14 @@ The order above is the practical dependency order, not permission to bypass the 
 
 **Goal:** Run deterministic outage/rate-limit scenarios and report measured resilience.
 
-- [ ] Load/validate provider fault configuration using the fault definitions in doc 07 §7.
-- [ ] Implement `provider_503_outage` and `provider_429_ratelimit` at the proxy layer with first-N behavior and deterministic seeding.
-- [ ] Emit `fault_injected` events and mark injected errors distinctly from real upstream errors.
-- [ ] Implement the resilience response per doc 08 §3.6 and formula P-16; return `null` when the baseline is zero/absent.
-- [ ] Verify injected failures never get classified as INFRA_ERROR and that repeat runs are reproducible.
+- [x] Load/validate provider fault configuration using the fault definitions in doc 07 §7.
+- [x] Implement `provider_503_outage` and `provider_429_ratelimit` at the proxy layer with first-N behavior and deterministic seeding.
+- [x] Emit `fault_injected` events and mark injected errors distinctly from real upstream errors.
+- [x] Implement the resilience response per doc 08 §3.6 and formula P-16; return `null` when the baseline is zero/absent.
+- [x] Verify injected failures never get classified as INFRA_ERROR and that repeat runs are reproducible.
 
-**Acceptance:** T-20 and T-21 pass; provider faults and resilience output are visible and correctly scoped.
+**Acceptance:** T-20 and T-21 pass; provider faults and resilience output are visible and correctly scoped.  
+**Tests/evidence (2026-11-14):** `pytest tests/proxy/test_faults.py` → 20 passed (exact first-N for 503/429 with OpenAI error shape and `Retry-After`, `fault_injected` + `llm_call(error=injected)` ordering, upstream never reached for injected calls, same sequence across runs, no re-injection after a proxy restart, baseline/tool/unknown scenarios untouched, loader rejects bad YAML). Full proxy suite 38 passed. Compose smoke: 503 run → 503 503 503 200; 429 run → 429 429 200 200. Resilience formula (P-16, null on zero baseline) covered by `tests/api::test_resilience` in PR #3. "Never INFRA" holds on the proxy side (`error='injected'`); the orchestrator's classification is Dev-B's (B5).
 
 ### 11. A13 — Mutation generator and test-strength score
 
@@ -258,3 +259,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
 | 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
 | 2026-11-14 | A4 measuring proxy implemented on `feat/A4-proxy` (FastAPI, compose service, README); T-01…T-05 pass against `mock_llm`; NFR-03 measured at +17.3 ms median. |
+| 2026-11-14 | A7 provider faults implemented on `feat/A7-provider-faults` (faults/*.yaml, loader, proxy injection); T-20 passes; resilience endpoint ships with A5 (PR #3). |

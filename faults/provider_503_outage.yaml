@@ -1,0 +1,6 @@
+# Provider fault (owner Dev-A). Format: docs/07 section 7; catalog: docs/03 F-10 (P-12).
+id: provider_503_outage
+group: provider
+layer: proxy
+description: First 3 LLM requests of the run get HTTP 503 (OpenAI-shaped error), then pass through
+params: { first_n: 3, status: 503 }

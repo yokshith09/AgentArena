@@ -55,6 +55,11 @@ class Database:
             return RunInfo(*row) if row else None
         return self._run(q)
 
+    def count_injections(self, run_id: str, fault_id: str) -> int:
+        return self._run(lambda c: c.execute(
+            "SELECT count(*) FROM events WHERE run_id = %s AND type = 'fault_injected'"
+            " AND payload->>'fault_id' = %s", (run_id, fault_id)).fetchone()[0])
+
     def insert_events(self, run_id: str, events: list[Event]) -> None:
         if not events:
             return
