@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-arena}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arena}
       POSTGRES_DB: ${POSTGRES_DB:-arena}
-    ports: ["5432:5432"]
+    ports: ["${POSTGRES_PORT:-5432}:5432"]   # set POSTGRES_PORT if a native Postgres already uses 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/migrations:/docker-entrypoint-initdb.d:ro   # runs *.sql on first start only

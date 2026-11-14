@@ -22,7 +22,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 1 | X2 | Complete repository bootstrap | P0 / M0 | None | In progress — approved and pushed on DEV-A; awaiting merge to main |
 | 2 | X1 | Sign off contracts and resolve/default open questions | P0 / M0 | None | In progress — DEV-A accepts current drafts/P-02…P-17 and confirms canonical fixtures; Dev-B/Dev-C acknowledgement and open questions remain |
 | 3 | A12 | Compose skeleton and `pricing.yaml` shell | P0 / M0 | X1, X2 | In progress — postgres/bifrost/mock_llm compose + `pricing.yaml` shell landed from main (7bb2440); proxy/api/orchestrator/frontend services, Bifrost pin and start/stop smoke remain |
-| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — `001_init.sql`, fixtures and `db/check_db.py` landed from main; check not yet run against a live Postgres |
+| 4 | A2 | Database migration and fabricated fixtures | P0 / M0 | X1 | In progress — verified 2026-11-14: `python db/check_db.py` → `db OK` on compose Postgres 16 (fixtures load, 4 events read back, status/state + event-type CHECKs reject bad rows, `schema_migrations` = `001_init`). Remaining: apply step for migrations after 001 (initdb runs only on first start); merge to main |
 | 5 | A3 | `mock_llm` service | P0 / M0 | X1 | Done per board (main) — `mock_llm/test_mock_llm.py` passes; doc 10 script-format note still to confirm |
 | 6 | A1 | Bifrost/provider verification and pricing | P0 / M0 | A12; provider access/OQ-05 | Blocked — provider/model/key/budget (OQ-05); `scripts/smoke_bifrost.py` ready |
 | 7 | A4 | Measuring proxy | P0 / M1 | A2, A3; A1 for real upstream | Planned |
@@ -255,3 +255,4 @@ The order above is the practical dependency order, not permission to bypass the 
 | 2026-11-12 | Implemented and verified X2; approved by DEV-A and pushed as commit `1c84fe3`; awaiting merge to main. |
 | 2026-11-12 | DEV-A reviewed docs 07/08/10, accepted current drafts and P-02…P-17, and confirmed the documented T-30 fixture scope; X1 remains open for other-owner acknowledgement and team-only answers. |
 | 2026-11-14 | Merged `origin/main` (Stage 0-1 foundation, commit `7bb2440`) into DEV-A; resolved `.env.example`, `.gitignore`, `requirements.txt`, docs README/task-board conflicts; updated A1/A2/A3/A12 statuses. |
+| 2026-11-14 | A2 DB check passed (`db OK`). Native Windows Postgres on host port 5432 blocked the first attempt; compose host port is now `${POSTGRES_PORT:-5432}` (documented in `.env.example`), and this machine uses 5433 via local `.env`. |
