@@ -28,9 +28,20 @@ services:
       postgres: { condition: service_healthy }
 
   bifrost:
-    image: maximhq/bifrost   # pin a version tag once smoke test (A1) passes
-    ports: ["${BIFROST_PORT:-8080}:8080"]
-    volumes: ["./data/bifrost:/app/data"]   # provider key is added in the UI at http://localhost:8080
+    # Pinned by digest after the A1 smoke test (2026-11-14); the image carries no version label.
+    image: maximhq/bifrost@sha256:5ec9873acaf1687556b6e4dd854b92b539d9debf87a5a683b66338648b84d3c8
+    # Bound to this machine only: inference needs no virtual key (bifrost/config.json), so it must
+    # not be reachable from the network. Other services reach it as http://bifrost:8080.
+    ports: ["127.0.0.1:${BIFROST_PORT:-8080}:8080"]
+    environment:
+      # One-time secret required by Bifrost before its dashboard can be set up; set it in .env.
+      BIFROST_SETUP_TOKEN: ${BIFROST_SETUP_TOKEN:-}
+      # Provider keys live only in .env and only in this container (never proxy/agents).
+      # bifrost/config.json references them as env.GROQ_API_KEY etc.
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    volumes:
+      - ./data/bifrost:/app/data                           # Bifrost's own DB + logs (git-ignored)
+      - ./bifrost/config.json:/app/data/config.json:ro     # providers, no secrets
 
   proxy:   # A4 measuring proxy; agents use OPENAI_BASE_URL=http://<host>:${PROXY_PORT}/runs/<run_id>/v1
     build: { context: ., dockerfile: proxy/Dockerfile }

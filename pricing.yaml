@@ -1,12 +1,19 @@
 # Versioned token prices (07 section 8). Values are NOT filled: copy from the provider pricing page (OQ-05, V-06).
-version: "2026-11-12"
+version: "2026-11-14"
 currency: USD
 models:
   "mock-model":                 # used with mock_llm only
     effective_from: "2026-11-01"
     input_per_1m_tokens: 0.0
     output_per_1m_tokens: 0.0
-  # "openai/gpt-4o-mini":
-  #   effective_from: "YYYY-MM-DD"
-  #   input_per_1m_tokens: ?
-  #   output_per_1m_tokens: ?
+  # Groq via Bifrost (OQ-05 / V-06). Keyed by the model name agents send through Bifrost.
+  # Source: console.groq.com/docs/model/openai/gpt-oss-20b and .../gpt-oss-120b, read 2026-11-14.
+  # List prices; Groq's 50% cached-input discount is not modelled (cost may be slightly high).
+  "groq/openai/gpt-oss-20b":
+    effective_from: "2026-11-14"
+    input_per_1m_tokens: 0.075
+    output_per_1m_tokens: 0.30
+  "groq/openai/gpt-oss-120b":
+    effective_from: "2026-11-14"
+    input_per_1m_tokens: 0.15
+    output_per_1m_tokens: 0.60

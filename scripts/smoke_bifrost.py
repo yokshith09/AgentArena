@@ -11,7 +11,9 @@ model = os.environ["BIFROST_MODEL"]
 
 
 def call(extra, headers=None):
-    body = {"model": model, "messages": [{"role": "user", "content": "Say ok."}], "max_tokens": 5, **extra}
+    # 200, not 5: reasoning models (gpt-oss) spend tokens before answering.
+    body = {"model": model, "messages": [{"role": "user", "content": "Say ok."}], "max_tokens": 200,
+            **extra}
     r = urllib.request.Request(base + "/v1/chat/completions", json.dumps(body).encode(),
                                {"Content-Type": "application/json", **(headers or {})})
     with urllib.request.urlopen(r, timeout=60) as resp:
