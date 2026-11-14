@@ -83,7 +83,7 @@ services:
     ports: ["${API_PORT:-8000}:8000"]
     volumes: ["./faults:/app/faults:ro"]   # scenario catalog read at request time
     depends_on:
-      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }   # tables must exist
 
 volumes:
   pgdata:
