@@ -165,7 +165,7 @@ def test_t04_n_tool_calls_give_n_events(client, conn, run_id, stream):
     assert [e["type"] for e in evs] == ["llm_call", "tool_call", "tool_call"]
     assert [e["payload"]["name"] for e in evs[1:]] == ["read_file", "run_tests"]
     assert evs[1]["payload"]["arguments_preview"] == '{"path": "a.py"}'
-    assert evs[1]["payload"]["call_id"] == "call_0"
+    assert evs[1]["payload"]["call_id"] == "call_0_0"
     assert evs[0]["payload"]["finish_reason"] == "tool_calls"
 
 
@@ -227,12 +227,12 @@ def test_headers_rewritten_for_upstream(client, run_id):
     assert "authorization" not in seen and "x-agent-role" not in seen
 
 
-def test_missing_usage_is_estimated_zero_cost(client, conn, run_id):
+def test_missing_usage_is_estimated_null_cost(client, conn, run_id):
     stub_upstream(client, lambda req: httpx.Response(
         200, json={"model": "mock-model", "choices": [{"message": {"content": "x"}, "finish_reason": "stop"}]}))
     assert client.post(f"/runs/{run_id}/v1/chat/completions", json=chat()).status_code == 200
     p = events(conn, run_id)[0]["payload"]
-    assert (p["tokens_in"], p["tokens_out"], p["cost"], p["cost_confidence"]) == (None, None, 0.0, "estimated")
+    assert (p["tokens_in"], p["tokens_out"], p["cost"], p["cost_confidence"]) == (None, None, None, "estimated")
     assert "usage" in p["warning"]
 
 

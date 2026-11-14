@@ -1,6 +1,9 @@
 """Stage 1 check (offline): example objects validate against contracts/*.schema.json, and bad ones are rejected."""
-import json, pathlib
+import json
+import pathlib
+
 from jsonschema import Draft202012Validator
+
 root = pathlib.Path(__file__).resolve().parent.parent / "contracts"
 for n in ("run", "event", "task", "agent"):
     v = Draft202012Validator(json.loads((root / f"{n}.schema.json").read_text()))

@@ -1,0 +1,5 @@
+name: agent-c-test-retry
+mode: command
+entrypoint: python agent.py
+model_config: { model: mock-model }
+description: Framework-free Agent A variant with a distinct prompt and bounded test retries
