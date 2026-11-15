@@ -36,10 +36,13 @@ needs_db = pytest.mark.skipif(not _db_available(), reason="no migrated Postgres 
 # ---- loader -----------------------------------------------------------------------------------
 def test_repo_fault_catalog_loads():
     faults = load_faults(ROOT / "faults")
-    assert {k: (f.group, f.layer, f.first_n, f.status) for k, f in faults.items()} == {
+    # The proxy only acts on proxy-layer faults; runner/agent_env faults (instruction, tool) load but are
+    # applied elsewhere (runner/run.py, agents/common/tools.py).
+    assert {k: (f.group, f.layer, f.first_n, f.status) for k, f in faults.items() if f.layer == "proxy"} == {
         "provider_503_outage": ("provider", "proxy", 3, 503),
         "provider_429_ratelimit": ("provider", "proxy", 2, 429),
     }
+    assert {"tool_run_tests_error", "instruction_misleading_hint"} <= set(faults)
 
 
 GOOD = {"id": "x", "group": "provider", "layer": "proxy", "description": "d",

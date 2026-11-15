@@ -1,5 +1,5 @@
 name: agent-b-openai-agents
 mode: command
 entrypoint: python agent.py
-model_config: { model: mock-model }
+model_config: { model: groq/openai/gpt-oss-20b }
 description: Coding agent built with the OpenAI Agents SDK using OpenAI-compatible Chat Completions
