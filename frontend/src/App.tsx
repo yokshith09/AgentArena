@@ -9,7 +9,7 @@ import {
 import { ApiFailure, createBenchmark, loadLive, type LiveData } from './api/live'
 import FixtureNotice from './components/FixtureNotice'
 import RunDetailPage from './components/RunDetail'
-import type { ResilienceRow, ResultRow, RunDetail } from './types'
+import type { Benchmark, ResultRow, RunDetail, Scenario } from './types'
 import './App.css'
 
 const stateOptions: Array<{ value: FixtureState; label: string }> = [
@@ -264,6 +264,8 @@ function App() {
             fixtureState={fixtureState}
             liveMode={liveMode}
             liveMessage={live.message}
+            benchmarks={liveMode ? (live.data?.benchmarks ?? []) : fixture.benchmark ? [fixture.benchmark] : []}
+            scenarioCatalog={liveMode && live.data ? live.data.scenarios : scenarios}
           />
         </main>
       </div>
@@ -281,12 +283,16 @@ function RouteView({
   fixtureState,
   liveMode,
   liveMessage,
+  benchmarks,
+  scenarioCatalog,
 }: {
   route: Route
   fixture: DashboardFixture
   fixtureState: FixtureState
   liveMode: boolean
   liveMessage: string
+  benchmarks: Benchmark[]
+  scenarioCatalog: Scenario[]
 }) {
   if (route !== 'limitations' && fixtureState === 'loading') {
     return <FixtureLoading title={routeTitles[route]} description={routeDescriptions[route]} />
@@ -305,7 +311,7 @@ function RouteView({
     case 'leaderboard':
       return <Leaderboard fixture={fixture} fixtureState={fixtureState} />
     case 'benchmarks':
-      return <Benchmarks fixture={fixture} fixtureState={fixtureState} />
+      return <Benchmarks fixture={fixture} fixtureState={fixtureState} benchmarks={benchmarks} />
     case 'new-benchmark':
       return <NewBenchmark fixture={fixture} liveMode={liveMode} />
     case 'compare':
@@ -315,7 +321,7 @@ function RouteView({
     case 'run-list':
       return <RunList fixture={fixture} fixtureState={fixtureState} />
     case 'resilience':
-      return <Resilience fixture={fixture} fixtureState={fixtureState} />
+      return <Resilience fixture={fixture} fixtureState={fixtureState} scenarioCatalog={scenarioCatalog} liveMode={liveMode} />
     case 'catalog':
       return <Catalog fixtureState={fixtureState} fixture={fixture} />
     case 'security':
@@ -438,6 +444,7 @@ function Leaderboard({
         />
       ) : (
         <>
+          <BenchmarkSummary fixture={fixture} results={results} scenario={selectedScenario} />
           <div className="section-toolbar">
             <div className="scenario-control">
               <label htmlFor="scenario">Scenario</label>
@@ -524,6 +531,7 @@ function Leaderboard({
                   <div className="agent-success">
                     <span>Success rate</span>
                     <strong>{formatRate(result.pass_rate.value)}</strong>
+                    <PassRateBar rate={result.pass_rate} />
                     <small>{formatInterval(result.pass_rate.ci_low, result.pass_rate.ci_high)} · {result.pass_rate.passed}/{result.pass_rate.n}</small>
                   </div>
                   <div className="agent-metrics">
@@ -551,6 +559,62 @@ function Leaderboard({
         </>
       )}
     </>
+  )
+}
+
+/** Headline numbers for the selected benchmark and scenario, above the leaderboard table. */
+function BenchmarkSummary({
+  fixture,
+  results,
+  scenario,
+}: {
+  fixture: DashboardFixture
+  results: ResultRow[]
+  scenario: string
+}) {
+  const passed = results.reduce((sum, r) => sum + r.pass_rate.passed, 0)
+  const counted = results.reduce((sum, r) => sum + r.pass_rate.n, 0)
+  const infra = results.reduce((sum, r) => sum + r.infra_excluded, 0)
+  const models = [...new Set(fixture.runs.map((run) => run.model).filter((m): m is string => Boolean(m)))]
+  const tiles = [
+    { label: `Runs counted (${scenario})`, value: String(counted), detail: `${results.length} agents` },
+    { label: 'Overall pass rate', value: counted ? formatRate(passed / counted) : '—', detail: `${passed} of ${counted} runs` },
+    {
+      label: 'Total spend',
+      value: formatMoney(fixture.benchmark?.spend_usd ?? null),
+      detail: fixture.benchmark?.config?.spend_cap_usd ? `cap ${formatMoney(fixture.benchmark.config.spend_cap_usd)}` : 'all scenarios',
+    },
+    { label: models.length > 1 ? 'Models' : 'Model', value: models.length ? models.join(', ') : '—', detail: 'as observed by the proxy' },
+    { label: 'INFRA errors excluded', value: String(infra), detail: infra ? 'not counted in pass rates' : 'none' },
+  ]
+  return (
+    <dl className="summary-strip" aria-label="Benchmark summary">
+      {tiles.map((tile) => (
+        <div className="summary-tile" key={tile.label}>
+          <dt>{tile.label}</dt>
+          <dd>
+            <strong className={tile.label.startsWith('Model') ? 'mono summary-model' : undefined}>{tile.value}</strong>
+            <span>{tile.detail}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/** Pass rate as a bar with its Wilson 95% interval drawn as a whisker. Decorative: the numbers are
+ *  printed next to it, so it is hidden from assistive technology. */
+function PassRateBar({ rate }: { rate: ResultRow['pass_rate'] }) {
+  if (rate.value === null) return null
+  const pct = (v: number | null) => `${Math.max(0, Math.min(100, (v ?? 0) * 100))}%`
+  const tone = rate.value >= 0.8 ? 'high' : rate.value >= 0.5 ? 'mid' : 'low'
+  return (
+    <span className={`pass-bar pass-bar-${tone}`} aria-hidden="true">
+      <span className="pass-bar-fill" style={{ width: pct(rate.value) }} />
+      {rate.ci_low !== null && rate.ci_high !== null && (
+        <span className="pass-bar-ci" style={{ left: pct(rate.ci_low), width: `calc(${pct(rate.ci_high)} - ${pct(rate.ci_low)})` }} />
+      )}
+    </span>
   )
 }
 
@@ -592,6 +656,7 @@ function LeaderboardRow({
       </th>
       <td className="num">
         <strong>{formatRate(result.pass_rate.value)}</strong>
+        <PassRateBar rate={result.pass_rate} />
         <span className="cell-detail">{formatInterval(result.pass_rate.ci_low, result.pass_rate.ci_high)} · {result.pass_rate.passed}/{result.pass_rate.n}</span>
       </td>
       <td className="num">
@@ -612,11 +677,13 @@ function LeaderboardRow({
 function Benchmarks({
   fixture,
   fixtureState,
+  benchmarks,
 }: {
   fixture: DashboardFixture
   fixtureState: FixtureState
+  benchmarks: Benchmark[]
 }) {
-  const { benchmark } = fixture
+  const selectedId = fixture.benchmark?.benchmark_id ?? null
   return (
     <>
       <PageHeading
@@ -625,54 +692,73 @@ function Benchmarks({
         action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>New benchmark</a>}
       />
       <FixtureNotice fixture={fixture} state={fixtureState} />
-      {!benchmark ? (
+      {benchmarks.length === 0 ? (
         <EmptyState
           title="No benchmarks yet"
           message="Create a benchmark to run agents against a shared task set."
           action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>Create benchmark</a>}
         />
       ) : (
-        <div className="table-scroll">
-          <table>
+        <div className="table-scroll" role="region" aria-label="Benchmarks" tabIndex={0}>
+          <table className="benchmarks-table">
             <thead>
               <tr>
                 <th scope="col">Benchmark</th>
                 <th scope="col">State</th>
+                <th scope="col">Matrix</th>
                 <th scope="col">Progress</th>
-                <th scope="col">Spend / cap</th>
+                <th scope="col" className="num">Spend / cap</th>
                 <th scope="col">Created</th>
                 <th scope="col">Runs</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th scope="row">
-                  <a href={routeHref('/', { benchmark: benchmark.benchmark_id })}>{benchmark.name}</a>
-                </th>
-                <td><StateBadge state={benchmark.state} /></td>
-                <td>
-                  <span>{benchmark.progress.done} / {benchmark.progress.total} done</span>
-                  <progress
-                    aria-label="Benchmark progress"
-                    value={benchmark.progress.done}
-                    max={Math.max(benchmark.progress.total, 1)}
-                  />
-                  <span className="cell-detail">
-                    {benchmark.progress.running} running · {benchmark.progress.queued} queued
-                  </span>
-                  <span className="cell-detail">
-                    {benchmark.progress.infra_error} INFRA · {benchmark.progress.excluded} excluded
-                  </span>
-                </td>
-                <td className="num">
-                  <strong>{formatMoney(benchmark.spend_usd)}</strong>
-                  <span className="cell-detail">of {formatMoney(benchmark.config.spend_cap_usd)}</span>
-                </td>
-                <td>{new Date(benchmark.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                <td>
-                  <a href={routeHref('/runs', { benchmark: benchmark.benchmark_id })}>View runs</a>
-                </td>
-              </tr>
+              {benchmarks.map((benchmark) => {
+                const config = benchmark.config
+                const agentsCount = config?.agent_ids?.length ?? 0
+                const tasksCount = config?.task_ids?.length ?? 0
+                const scenarioCount = config?.scenarios?.length ?? 1
+                const isSelected = benchmark.benchmark_id === selectedId
+                return (
+                  <tr key={benchmark.benchmark_id} className={isSelected ? 'row-selected' : undefined}>
+                    <th scope="row">
+                      <a
+                        href={routeHref('/', { benchmark: benchmark.benchmark_id })}
+                        aria-current={isSelected ? 'true' : undefined}
+                      >
+                        {benchmark.name}
+                      </a>
+                      {isSelected && <span className="cell-detail">Shown on the leaderboard</span>}
+                    </th>
+                    <td><StateBadge state={benchmark.state} /></td>
+                    <td>
+                      {agentsCount && tasksCount
+                        ? `${agentsCount} agents × ${tasksCount} tasks × ${scenarioCount} scenario${scenarioCount === 1 ? '' : 's'} × ${config.n_runs}`
+                        : '—'}
+                    </td>
+                    <td>
+                      <span>{benchmark.progress.done} / {benchmark.progress.total} done</span>
+                      <progress
+                        aria-label={`Progress of ${benchmark.name}`}
+                        value={benchmark.progress.done}
+                        max={Math.max(benchmark.progress.total, 1)}
+                      />
+                      <span className="cell-detail">
+                        {benchmark.progress.running} running · {benchmark.progress.queued} queued ·{' '}
+                        {benchmark.progress.infra_error} INFRA · {benchmark.progress.excluded} excluded
+                      </span>
+                    </td>
+                    <td className="num">
+                      <strong>{formatMoney(benchmark.spend_usd)}</strong>
+                      <span className="cell-detail">of {formatMoney(config?.spend_cap_usd ?? null)}</span>
+                    </td>
+                    <td>{new Date(benchmark.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                    <td>
+                      <a href={routeHref('/runs', { benchmark: benchmark.benchmark_id })}>View runs</a>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -1308,83 +1394,110 @@ function RunList({
 function Resilience({
   fixture,
   fixtureState,
+  scenarioCatalog,
+  liveMode,
 }: {
   fixture: DashboardFixture
   fixtureState: FixtureState
+  scenarioCatalog: Scenario[]
+  liveMode: boolean
 }) {
   const rows = fixture.resilience
+  const agentIds = [...new Set(rows.map((row) => row.agent_id))]
+  const faultIds = [...new Set(rows.map((row) => row.scenario))]
+  const cell = (agentId: string, scenario: string) =>
+    rows.find((row) => row.agent_id === agentId && row.scenario === scenario)
+  const runsHref = (agentId: string, scenario: string) => routeHref('/runs', {
+    agent: agentId,
+    scenario,
+    task: null,
+    status: null,
+    benchmark: fixture.benchmark?.benchmark_id ?? null,
+  })
+  const describe = (id: string) => scenarioCatalog.find((s) => s.id === id)?.description ?? id
   return (
     <>
-      <PageHeading title="Failure scenarios" description="Compare baseline performance with selected injected faults." />
+      <PageHeading
+        title="Failure scenarios"
+        description="How each agent's pass rate changes when a fault is injected, compared with its own baseline."
+      />
       <FixtureNotice fixture={fixture} state={fixtureState} />
       {rows.length ? (
-        <div className="table-scroll" role="region" aria-label="Failure scenario results" tabIndex={0}>
-          <table className="resilience-table">
-            <thead>
-              <tr>
-                <th scope="col">Agent</th>
-                <th scope="col">Scenario</th>
-                <th scope="col">Baseline pass rate</th>
-                <th scope="col">Scenario pass rate</th>
-                <th scope="col">Resilience score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.agent_id}>
-                  <th scope="row">{agents.find(({ agent_id }) => agent_id === row.agent_id)?.name ?? row.agent_id}</th>
-                  <td>{scenarios.find(({ id }) => id === row.scenario)?.id ?? row.scenario}</td>
-                  <td>
-                    {row.baseline_pass_rate.n === 0
-                      ? formatPassRate(row.baseline_pass_rate)
-                      : (
-                        <a
-                          className="table-action-link"
-                          href={routeHref('/runs', {
-                            state: 'success',
-                            agent: row.agent_id,
-                            scenario: 'baseline',
-                            task: null,
-                            status: null,
-                          })}
-                        >
-                          {formatPassRate(row.baseline_pass_rate)}
-                        </a>
-                      )}
-                  </td>
-                  <td>
-                    {row.scenario_pass_rate.n === 0
-                      ? formatPassRate(row.scenario_pass_rate)
-                      : (
-                        <a
-                          className="table-action-link"
-                          href={routeHref('/runs', {
-                            state: 'fault',
-                            agent: row.agent_id,
-                            scenario: row.scenario,
-                            task: null,
-                            status: null,
-                          })}
-                        >
-                          {formatPassRate(row.scenario_pass_rate)}
-                        </a>
-                      )}
-                  </td>
-                  <td>{row.resilience_score === null ? '—' : `${(row.resilience_score * 100).toFixed(1)}%`}</td>
+        <>
+          <div className="table-scroll" role="region" aria-label="Failure scenario matrix" tabIndex={0}>
+            <table className="resilience-matrix">
+              <thead>
+                <tr>
+                  <th scope="col">Agent</th>
+                  <th scope="col" className="matrix-baseline-head">Baseline</th>
+                  {faultIds.map((id) => (
+                    <th scope="col" key={id} title={describe(id)}>
+                      <span className="mono">{id}</span>
+                      <span className="cell-detail">{scenarioCatalog.find((s) => s.id === id)?.group ?? 'fault'}</span>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {agentIds.map((agentId) => {
+                  const baseline = rows.find((row) => row.agent_id === agentId)?.baseline_pass_rate
+                  return (
+                    <tr key={agentId}>
+                      <th scope="row">
+                        {agents.find(({ agent_id }) => agent_id === agentId)?.name ?? agentId}
+                        <span className="cell-detail mono">{agentId}</span>
+                      </th>
+                      <td className={`matrix-cell ${toneClass(baseline?.value ?? null)}`}>
+                        {baseline ? (
+                          <a href={runsHref(agentId, 'baseline')}>
+                            <strong>{formatRate(baseline.value)}</strong>
+                            <span>{baseline.passed}/{baseline.n} passed</span>
+                          </a>
+                        ) : '—'}
+                      </td>
+                      {faultIds.map((faultId) => {
+                        const row = cell(agentId, faultId)
+                        if (!row) return <td key={faultId} className="matrix-cell tone-none">—</td>
+                        return (
+                          <td key={faultId} className={`matrix-cell ${toneClass(row.scenario_pass_rate.value)}`}>
+                            <a href={runsHref(agentId, faultId)}>
+                              <strong>{formatRate(row.scenario_pass_rate.value)}</strong>
+                              <span>{row.scenario_pass_rate.passed}/{row.scenario_pass_rate.n} passed</span>
+                              <span className="matrix-score">
+                                resilience {row.resilience_score === null ? '—' : `${(row.resilience_score * 100).toFixed(0)}%`}
+                              </span>
+                            </a>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="matrix-legend" aria-label="Legend">
+            <span><i className="swatch tone-high" /> pass rate ≥ 80%</span>
+            <span><i className="swatch tone-mid" /> 50–79%</span>
+            <span><i className="swatch tone-low" /> below 50%</span>
+            <span><i className="swatch tone-none" /> no runs</span>
+            <span>
+              <strong>Resilience</strong> = pass rate under the fault ÷ baseline pass rate;
+              <strong> —</strong> when the agent's baseline is 0% (nothing to compare against).
+            </span>
+          </div>
+        </>
       ) : (
         <EmptyState
           title="No injected-fault results"
-          message="Select Fault injected from the fixture selector to inspect the provider 503 example."
+          message={liveMode
+            ? 'Pick a benchmark that includes fault scenarios (top right), or launch one with faults selected.'
+            : 'Select Fault injected from the fixture selector to inspect the provider 503 example.'}
         />
       )}
       <p className="table-footnote">
-        Resilience score is scenario pass rate divided by baseline pass rate. Results are illustrative mock data.
-        Tests cover selected conditions, not all production failures.
+        Each cell links to the runs behind it. Tests cover the selected conditions, not all production failures.
+        {!liveMode && ' Results are illustrative mock data.'}
       </p>
       <section className="content-section">
         <h2>Scenario definitions</h2>
@@ -1404,7 +1517,7 @@ function Resilience({
               </tr>
             </thead>
             <tbody>
-              {scenarios.map((scenario) => (
+              {scenarioCatalog.map((scenario) => (
                 <tr key={scenario.id}>
                   <th scope="row">{scenario.id}</th>
                   <td>{scenario.group}</td>
@@ -1418,6 +1531,12 @@ function Resilience({
       </section>
     </>
   )
+}
+
+/** Colour band for a pass rate; always paired with the printed value (not colour alone). */
+function toneClass(value: number | null) {
+  if (value === null) return 'tone-none'
+  return value >= 0.8 ? 'tone-high' : value >= 0.5 ? 'tone-mid' : 'tone-low'
 }
 
 function Catalog({ fixture, fixtureState }: {
@@ -1514,14 +1633,6 @@ function Catalog({ fixture, fixtureState }: {
   )
 }
 
-function formatPassRate(rate: ResilienceRow['baseline_pass_rate']) {
-  if (rate.n === 0) return '— (no runs)'
-  const interval = rate.ci_low === null || rate.ci_high === null
-    ? ''
-    : ` [${formatRate(rate.ci_low)}–${formatRate(rate.ci_high)}]`
-  return `${formatRate(rate.value)} (${rate.passed}/${rate.n})${interval}`
-}
-
 function Security({ fixture, fixtureState }: {
   fixture: DashboardFixture
   fixtureState: FixtureState
@@ -1608,13 +1719,22 @@ function formatInterval(low: number | null, high: number | null) {
   return `[${(low * 100).toFixed(1)}–${(high * 100).toFixed(1)}%]`
 }
 
-function formatMoney(value: number | null) {
-  return value === null ? '—' : `$${value.toFixed(4)}`
+/** Decimals needed to show `value` with two significant digits (min 2, max 8). Agent runs on cheap
+ *  models cost fractions of a cent, so a fixed 4 decimals made every agent read $0.0004. */
+function moneyDigits(value: number) {
+  const abs = Math.abs(value)
+  if (abs === 0 || abs >= 1) return 2
+  return Math.min(8, Math.max(2, 1 - Math.floor(Math.log10(abs))))
+}
+
+function formatMoney(value: number | null, digits?: number) {
+  return value === null ? '—' : `$${value.toFixed(digits ?? moneyDigits(value))}`
 }
 
 function formatMoneyInterval(low: number | null, high: number | null) {
   if (low === null || high === null) return '[—]'
-  return `[${formatMoney(low)}–${formatMoney(high)}]`
+  const digits = Math.max(moneyDigits(low), moneyDigits(high))
+  return `[${formatMoney(low, digits)}–${formatMoney(high, digits)}]`
 }
 
 function formatStat(value: number | null) {
