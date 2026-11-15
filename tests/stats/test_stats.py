@@ -105,3 +105,9 @@ def test_resilience_score():
     assert stats.resilience_score({"value": 0.0}, {"value": 0.4}) is None
     assert stats.resilience_score({"value": None}, {"value": 0.4}) is None
     assert stats.resilience_score({"value": 0.5}, {"value": None}) is None
+
+
+def test_bootstrap_is_independent_of_input_order():
+    vals = [0.00031, 0.00042, 0.00035, 0.00029, 0.00038]
+    assert stats.bootstrap_mean_ci(vals) == stats.bootstrap_mean_ci(vals[::-1])         == stats.bootstrap_mean_ci(sorted(vals))
+    assert stats.describe(vals) == stats.describe(vals[::-1])

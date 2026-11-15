@@ -44,8 +44,11 @@ def bootstrap_mean_ci(values: Sequence[float], resamples: int = BOOTSTRAP_RESAMP
     n = len(values)
     if n < 2:
         return None
+    # Sort first: with a fixed seed the result must depend only on the values, not on the order
+    # the database happened to return them in (otherwise a restored DB can give another CI).
+    ordered = sorted(values)
     rng = random.Random(seed)
-    means = sorted(sum(rng.choices(values, k=n)) / n for _ in range(resamples))
+    means = sorted(sum(rng.choices(ordered, k=n)) / n for _ in range(resamples))
     lo_q, hi_q = (1 - level) / 2, 1 - (1 - level) / 2
     return _quantile(means, lo_q), _quantile(means, hi_q)
 
