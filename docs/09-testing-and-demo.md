@@ -20,11 +20,11 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-03 | PX | Added latency vs direct `mock_llm` measured (NFR-03) | A | P0 | pass 2026-11-14: median +17.3 ms (direct 5.6 ms, via proxy 22.9 ms, p90 26.1 ms; 40 calls, uvicorn + `mock_llm` + compose Postgres on Windows host) |
 | T-04 | PX | Response with N tool calls → N `tool_call` events | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`); stream and non-stream |
 | T-05 | PX | Unknown/finished `run_id` → 404 OpenAI error; upstream 5xx tagged `error=upstream`; DB down → still forwards | A | P0 | pass 2026-11-14 (`tests/proxy`, branch `feat/A4-proxy`) |
-| T-06 | Validator/TK | Good tasks accepted; task whose broken state passes → rejected; task whose reference fails → rejected; nondeterministic task rejected | B | P0 | not run |
-| T-07 | Grader | Agent edits protected tests → `tamper_detected`, `passed=false`; reference solution → passes | B | P0 | not run |
-| T-08 | Runner | Dummy agent gets all env vars (§2.2); diff captured; timeout kills process tree; cleanup done | B | P0 | not run |
-| T-09 | Runner | Spawn failure → `sandbox_error`; works on each dev OS (A-06); non-proxy network call blocked + logged in the Docker sandbox | B | P0 | not run |
-| T-10 | Grader | Hidden tests run from clean copy; hidden tests absent from agent workspace | B | P0 | not run |
+| T-06 | Validator/TK | Good tasks accepted; task whose broken state passes → rejected; task whose reference fails → rejected; nondeterministic task rejected | B | P0 | pass 2026-11-15 (tests/grader: 5 tasks accepted; broken-passes / reference-fails / missing-files rejected) |
+| T-07 | Grader | Agent edits protected tests → `tamper_detected`, `passed=false`; reference solution → passes | B | P0 | pass 2026-11-15 (tamper: edited/deleted tests, planted conftest.py; hardcoded visible tests fail hidden suite) |
+| T-08 | Runner | Dummy agent gets all env vars (§2.2); diff captured; timeout kills process tree; cleanup done | B | P0 | pass 2026-11-15 (tests/runner: env contract, no secret leak, diff, timeout kills process tree) |
+| T-09 | Runner | Spawn failure → `sandbox_error`; works on each dev OS (A-06); non-proxy network call blocked + logged in the Docker sandbox | B | P0 | partial: spawn/setup failures and Windows pass (tests/runner); Docker network blocking cut (B4) |
+| T-10 | Grader | Hidden tests run from clean copy; hidden tests absent from agent workspace | B | P0 | pass 2026-11-15 (hidden tests run from a clean copy, absent from agent workspace; agent that kills pytest cannot pass) |
 | T-11 | AG | Each reference agent completes a scripted task against `mock_llm` | C | P0 | pass on mock_llm (tests in agents/, now collected by pytest); retry behaviour covered by agents/agent_a/test_agent_a_retry.py |
 | T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | pass 2026-11-15: all three agents ran all 5 tasks via proxy→Bifrost→Groq in X6 (costs recorded, verified) |
 | T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | A (was B) | P0 | pass 2026-11-15 (`tests/orchestrator`: classification table, upstream-vs-injected rule, full matrix on a throwaway DB) |

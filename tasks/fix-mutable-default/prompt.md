@@ -1,0 +1,1 @@
+`solution.py` has `add_item(item, items=None)`-style behaviour implemented with a shared default list, so calls interfere with each other. Fix `add_item` so every call without an explicit list starts from a fresh empty list, and all tests in `tests/` pass. Do not modify anything under `tests/`.

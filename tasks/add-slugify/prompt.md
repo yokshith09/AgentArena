@@ -1,0 +1,1 @@
+`solution.py` contains an unimplemented `slugify(text)`. Implement it: lowercase the text, turn every run of non-alphanumeric characters into a single hyphen, and strip leading/trailing hyphens. Make every test in `tests/` pass. Do not modify anything under `tests/`.

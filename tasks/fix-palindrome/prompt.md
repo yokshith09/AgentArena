@@ -1,0 +1,1 @@
+`solution.py` has `is_palindrome(text)`, which should ignore case, spaces and punctuation (only letters and digits count). It currently compares the raw string. Fix it so every test in `tests/` passes. Do not modify anything under `tests/`.

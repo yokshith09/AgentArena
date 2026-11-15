@@ -1,0 +1,1 @@
+The workspace contains `solution.py` with `sum_range(start, end)`, which should return the sum of all integers from `start` to `end`, **both inclusive**. It is buggy. Fix it so every test in `tests/` passes. Do not modify anything under `tests/`.
