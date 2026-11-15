@@ -316,7 +316,7 @@ recorded in the [task board](docs/14-task-board.md) (X9).
 
 - **In the product:** the benchmarked agents are LLM-driven (Groq `gpt-oss-20b`, reached only
   through Bifrost); AgentArena measures and compares them.
-- **AI tools used to build it:** Claude Code.
+- **AI tools used to build it:** Claude Code, Codex
 
 ## Documentation
 
