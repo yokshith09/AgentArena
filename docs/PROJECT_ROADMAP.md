@@ -1,8 +1,8 @@
 # PROJECT_ROADMAP · AgentArena
 
-Status: Draft v1 · Last updated 2026-11-12 · Deadline 2026-11-15 · Team 3 (Dev-A, Dev-B, Dev-C; names open, OQ-04). Planning and foundation implementation are underway. This plan does not guarantee success: planned P0 load (≈ 42 h per developer, midpoint estimates) is high against three working days — see [docs/14-task-board.md](docs/14-task-board.md) load table and the cut rules.
+Status: Draft v1 · Last updated 2026-11-12 · Deadline 2026-11-15 · Team 3 (Dev-A, Dev-B, Dev-C; names open, OQ-04). Planning and foundation implementation are underway. This plan does not guarantee success: planned P0 load (≈ 42 h per developer, midpoint estimates) is high against three working days — see [docs/14-task-board.md](14-task-board.md) load table and the cut rules.
 
-Authority: tasks/owners/status → [docs/14-task-board.md](docs/14-task-board.md) · contracts → docs 07/08/10 · decisions → [docs/01](docs/01-hackathon-strategy.md) · team operating rules, dependency graph, risks → [HACKATHON_PLAN.md](HACKATHON_PLAN.md).
+Authority: tasks/owners/status → [docs/14-task-board.md](14-task-board.md) · contracts → docs 07/08/10 · decisions → [docs/01](01-hackathon-strategy.md) · team operating rules, dependency graph, risks → [HACKATHON_PLAN.md](HACKATHON_PLAN.md).
 
 ## 1. Current Focus
 
@@ -21,7 +21,7 @@ Nothing else starts until its contract (X1) exists. Only one milestone is active
 |---|---|
 | Implemented | **X2** repository bootstrap and skeleton; **A3** scripted `mock_llm` (standalone integration check passes). Contract schemas, DB migration/fixtures, compose config, and smoke/check scripts are present. |
 | In progress | **X1** contracts 07/08/10 drafted, unsigned; **A12** compose config present but services not started; **A2** migration/fixtures present but DB check not run. |
-| Planned | All tasks in the [board](docs/14-task-board.md) except those below. |
+| Planned | All tasks in the [board](14-task-board.md) except those below. |
 | Blocked / waiting | A1 (needs provider key and model, OQ-05) · B4 Docker sandbox (needs Docker confirmed, OQ-08) · C14 needs a Tavily key (OQ-13). No P0 implementation task should start until X1 is signed off. |
 | Unknown | Whether any work from 1–11 Nov exists outside this folder (OQ-12). If it does, re-audit before M0. |
 
@@ -50,7 +50,7 @@ Integration is continuous, not final: every milestone ends with an integration t
 
 ## 4. Epics and user stories
 
-| Epic | Stories (acceptance = see feature in [docs/03](docs/03-feature-specs.md)) | Stage |
+| Epic | Stories (acceptance = see feature in [docs/03](03-feature-specs.md)) | Stage |
 |---|---|---|
 | E1 Foundation | **US-01** As a team we work from frozen contracts and a shared repo. **US-02** As an operator I can send an LLM request through Bifrost and read the result. | 0, 1 |
 | E2 Measurement | **US-03** As an operator every agent LLM call is logged with tokens, cost and latency. | 2 |
@@ -66,7 +66,7 @@ Integration is continuous, not final: every milestone ends with an integration t
 
 ## 5. Judging criteria → feature → evidence → demo point
 
-**Official judging criteria (hackathon rules, 2026-11-12):** Innovation · Technical execution · Problem and potential impact · Use of AI · User experience · Scalability and potential. No weights were given. Official-criteria trace: [docs/13](docs/13-traceability.md) (bottom table). The table below keeps the derived G1-G8 order used for the demo walkthrough; the five mandatory requirements of Problem 02 are covered by rows 2-5.
+**Official judging criteria (hackathon rules, 2026-11-12):** Innovation · Technical execution · Problem and potential impact · Use of AI · User experience · Scalability and potential. No weights were given. Official-criteria trace: [docs/13](13-traceability.md) (bottom table). The table below keeps the derived G1-G8 order used for the demo walkthrough; the five mandatory requirements of Problem 02 are covered by rows 2-5.
 
 | Order | Criterion (derived) | Feature | Test / evidence | Demo point |
 |---|---|---|---|---|
@@ -81,9 +81,9 @@ Integration is continuous, not final: every milestone ends with an integration t
 | 9 | G8 Bifrost + Tavily | F-01, F-14 | V-01, T-29, T-25; DA-12 | Proxy → Bifrost path shown in architecture/trace; Tavily research agent (C14, D-13) shown in trace |
 | 10 | G7 honesty | F-16 | DA-08 | Limitations page |
 
-## 6. Scope-cut candidates and fallbacks (summary; full rules in [docs/12](docs/12-delivery-plan.md) §4)
+## 6. Scope-cut candidates and fallbacks (summary; full rules in [docs/12](12-delivery-plan.md) §4)
 
 Cut bottom-up: Stage 14 → 13 → 12 extras → 11 → Stage 9 UI/doctor → Stage 8 extras (task count to 8, drop strength/Hypothesis) → Docker hardening (subprocess fallback) → final benchmark size. Never cut: Stages 0–7, ≥ 4 faults, Stage 15, interval/n/INFRA visibility, MOCK ribbon, three agents. External-service fallbacks and risk table: [HACKATHON_PLAN.md](HACKATHON_PLAN.md) §6.
 
 ## 7. Presentation
-Out of scope here. [docs/PPT_FRAMEWORK.md](docs/PPT_FRAMEWORK.md) is an untouched placeholder, "To be supplied separately".
+Out of scope here. [docs/PPT_FRAMEWORK.md](PPT_FRAMEWORK.md) is an untouched placeholder, "To be supplied separately".

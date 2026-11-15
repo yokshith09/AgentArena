@@ -28,7 +28,7 @@ Authoritative list (IDs, owners, estimates, acceptance, tests, status): [14 Task
 `contract` PRs need both other owners. Others: named reviewer, or self-merge with passing tests if reviewer blocked > 1 h (logged in PR).
 
 ## 4. Checkpoints
-Milestones, windows and gates (re-baselined 2026-11-12): [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md) §3. Operating rules (branching, PR, merge checks): [HACKATHON_PLAN.md](../HACKATHON_PLAN.md) §4.
+Milestones, windows and gates (re-baselined 2026-11-12): [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §3. Operating rules (branching, PR, merge checks): [HACKATHON_PLAN.md](HACKATHON_PLAN.md) §4.
 
 ## 5. Working agreements
 - Trunk-based, short branches (repo not yet git, OQ-09). Decisions go into [01](01-hackathon-strategy.md), not chat.

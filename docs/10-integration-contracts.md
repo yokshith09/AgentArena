@@ -122,7 +122,7 @@ Run commands live in each component's own README (written by owner); not specifi
 ## 5. Repo layout, ownership, conflict areas (P-10)
 
 ```
-docker-compose.yml  .env.example  pricing.yaml  README.md  HACKATHON_PLAN.md
+docker-compose.yml  .env.example  pricing.yaml  README.md   (planning docs: docs/HACKATHON_PLAN.md, docs/PROJECT_ROADMAP.md)
 db/{migrations,fixtures}/   proxy/   api/(incl. stats)   mock_llm/        -> Dev-A
 orchestrator/   runner/   grader/(incl. validator, seed loader)           -> Dev-B
 agents/(incl. common/tools.py)   frontend/(incl. mocks/)                  -> Dev-C
@@ -141,7 +141,7 @@ docs/     (all contribute; Dev-C stewards)
 | `frontend/mocks/*`, `frontend/src/api/types.ts` | Must match 08 | C only; A reviews against 08 |
 | `faults/*.yaml` | Format drift | Format per 07 §7; owner by group; A reviews format |
 | `agents/common/tools.py` | Used by all reference agents | C owns; B reviews fault hook |
-| `README.md`, `HACKATHON_PLAN.md` | Last-minute edits | C only in final day; others send text |
+| `README.md`, `docs/HACKATHON_PLAN.md` | Last-minute edits | C only in final day; others send text |
 | Dependency manifests (Python/JS) | Version conflicts | One shared Python env spec (A creates), additions via PR |
 
 ## 6. Compatibility & change rules (NFR-01)

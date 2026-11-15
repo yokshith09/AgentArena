@@ -3,7 +3,7 @@
 > Status: Draft. Scope decision D-12: team keeps the **full plan** (Stages 0–8, 10, 15 P0; 9 P1; 11–13 P2; 14 P3), parallelised across 3 developers. Today = 2026-11-11, build deadline 15 Nov; submission cutoff time unknown (OQ-03) → treat **14 Nov EOD as the real deadline**, 15 Nov as buffer.
 
 ## 1. Sequencing
-Milestones, windows, per-task lanes: [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md) §3 and [14 Task Board](14-task-board.md) (re-baselined 2026-11-12: CP0 midday 12 Nov, CP1 12 Nov EOD, CP2 13 Nov midday, CP3 13 Nov EOD, CP4 14 Nov midday = freeze, CP5 14 Nov EOD, 15 Nov buffer). Not duplicated here.
+Milestones, windows, per-task lanes: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §3 and [14 Task Board](14-task-board.md) (re-baselined 2026-11-12: CP0 midday 12 Nov, CP1 12 Nov EOD, CP2 13 Nov midday, CP3 13 Nov EOD, CP4 14 Nov midday = freeze, CP5 14 Nov EOD, 15 Nov buffer). Not duplicated here.
 
 ## 2. Stabilisation buffer
 Sat PM + Sun are buffer. After CP4: bug fixes only, each with a failing test first. Final benchmark launched at CP3 so data exists before freeze; one rerun allowed. Frozen demo data kept as a DB dump `db/demo-data.sql` (proposal, owner A), restored by README steps, so the demo never depends on a live provider.

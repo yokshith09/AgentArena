@@ -39,7 +39,7 @@ Do not mark a task done just because code was written. Record test/evidence link
 | 16 | A10 | Security score API | P2 / stretch | B10; only after P0 gate | Planned — gated |
 | 17 | A11 | Record/replay and local-model support | P3 / stretch | A4; only after P0/P1 gates | Planned — gated |
 
-The order above is the practical dependency order, not permission to bypass the task board's milestone gates. M0/M1/M2/M3/M4/M5 dates and scope cuts are in [PROJECT_ROADMAP.md](../PROJECT_ROADMAP.md) and [12-delivery-plan.md](12-delivery-plan.md). Stretch work is not started unless the preceding release gate is green and DEV-A has capacity.
+The order above is the practical dependency order, not permission to bypass the task board's milestone gates. M0/M1/M2/M3/M4/M5 dates and scope cuts are in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) and [12-delivery-plan.md](12-delivery-plan.md). Stretch work is not started unless the preceding release gate is green and DEV-A has capacity.
 
 ## Step-by-step task checklist
 
