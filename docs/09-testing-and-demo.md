@@ -27,8 +27,8 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-10 | Grader | Hidden tests run from clean copy; hidden tests absent from agent workspace | B | P0 | not run |
 | T-11 | AG | Each reference agent completes a scripted task against `mock_llm` | C | P0 | pass on mock_llm (tests in agents/, now collected by pytest); retry behaviour covered by agents/agent_a/test_agent_a_retry.py |
 | T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | not run |
-| T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | B | P0 | not run |
-| T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | B | P0 | not run |
+| T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | A (was B) | P0 | pass 2026-11-15 (`tests/orchestrator`: classification table, upstream-vs-injected rule, full matrix on a throwaway DB) |
+| T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | A (was B) | P0 | pass 2026-11-15 (`tests/orchestrator`: restart recovery, done slots not re-run, cap 0.025 halts after 3 × 0.01) |
 | T-15 | Stats | Wilson, bootstrap (fixed seed), median/std, edge cases (n=0,1, all pass) vs hand-computed goldens | A | P0 | pass 2026-11-14 (`tests/stats`, 12 tests, branch `feat/A5-stats-api`) |
 | T-16 | API | Each endpoint's response validates against models and mock payloads; error envelope; launch validation rules | A | P0 | pass 2026-11-14 (tests/api against real Postgres; 96 tests pass repo-wide) |
 | T-17 | UI | Every screen renders loading/empty/error/success/partial/halted from fixtures; MOCK ribbon visible in mock mode | C | P0 | pass: manual browser check + 14 automated tests (`npm test` in frontend: every route x 8 states in mock mode, live-mode render, API-down, nav keeps live mode, launcher POST + 422 errors) |
