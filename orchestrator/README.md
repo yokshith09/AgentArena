@@ -11,7 +11,7 @@ compose `postgres` + `migrate`, and the `proxy` for real runs.
 
 ```powershell
 docker compose up -d migrate proxy            # + bifrost (Groq) or --profile mock mock_llm
-$env:DATABASE_URL = "postgresql://arena:arena@localhost:5433/arena"
+$env:DATABASE_URL = (Select-String -Path .env -Pattern '^DATABASE_URL=').Line.Split('=', 2)[1]
 python -m orchestrator.seed                   # index agents/* and validated tasks/* into the DB
 python -m orchestrator                        # poll for queued benchmarks (Ctrl+C to stop)
 ```

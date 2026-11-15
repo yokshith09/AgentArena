@@ -27,9 +27,15 @@ docker compose up -d --build migrate api        # Postgres + schema + REST API o
 pip install -r requirements.txt                 # host tools (psycopg etc.)
 ```
 
-Load the frozen benchmark data (real runs on Groq `gpt-oss-20b` via Bifrost, 15 Nov 2026). On
-PowerShell set the connection first: `$env:DATABASE_URL="postgresql://arena:arena@localhost:5432/arena"`
-(use your `POSTGRES_PORT`); bash users: `export $(grep DATABASE_URL .env)`.
+Load the frozen benchmark data (real runs on Groq `gpt-oss-20b` via Bifrost, 15 Nov 2026). Host
+scripts read `DATABASE_URL`; take it from `.env` in each new terminal:
+
+```powershell
+$env:DATABASE_URL = (Select-String -Path .env -Pattern '^DATABASE_URL=').Line.Split('=', 2)[1]
+```
+```bash
+export $(grep '^DATABASE_URL=' .env)
+```
 
 ```bash
 python db/demo.py load
@@ -60,10 +66,11 @@ Stop: `docker compose down` (keeps the data volume; add `-v` to delete it).
    ```bash
    python -m venv .venv
    .venv/Scripts/activate                 # macOS/Linux: source .venv/bin/activate
-   pip install -r requirements.txt -r agents/requirements.txt
+   pip install -r requirements-dev.txt -r agents/requirements.txt
    ```
-4. Index agents and tasks (tasks are loaded only if the validator accepts them):
-   `python -m orchestrator.seed`
+   (`requirements-dev.txt` adds pytest, which the grader and task validator run.)
+4. Index agents and tasks (tasks are loaded only if the validator accepts them), with `DATABASE_URL`
+   set as above: `python -m orchestrator.seed`
 5. Launch a benchmark from the dashboard (**Benchmarks → New benchmark**) or `POST /api/benchmarks`.
 6. Run the orchestrator (Groq free tier: 8K tokens/min, so space runs ~35 s):
    ```bash
