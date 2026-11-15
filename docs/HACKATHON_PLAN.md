@@ -1,17 +1,17 @@
 # HACKATHON_PLAN · AgentArena
 
-Operating plan for the team. Milestones/focus: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) · tasks: [docs/14-task-board.md](docs/14-task-board.md) · decisions: [docs/01](docs/01-hackathon-strategy.md) · doc map: [docs/README.md](docs/README.md).
+Operating plan for the team. Milestones/focus: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) · tasks: [docs/14-task-board.md](14-task-board.md) · decisions: [docs/01](01-hackathon-strategy.md) · doc map: [docs/README.md](../README.md).
 
 Last updated 2026-11-12. Deadline 2026-11-15. **Current Focus: M0 — contracts sign-off (X1), repo (X2), then parallel start of A1/A2/A3/B1/C1.**
 
 ## UPDATE 2026-11-15 (last day)
-Dev-B has not contributed. The runner, grader, validator, orchestrator and tasks are reassigned between Dev-A and Dev-C, with proposed cuts, in **[docs/16-final-day-plan.md](docs/16-final-day-plan.md)**. Read that first. Submission closes 15 Nov 11:59 PM (timezone to confirm).
+Dev-B has not contributed. The runner, grader, validator, orchestrator and tasks are reassigned between Dev-A and Dev-C, with proposed cuts, in **[docs/16-final-day-plan.md](16-final-day-plan.md)**. Read that first. Submission closes 15 Nov 11:59 PM (timezone to confirm).
 
 ## 0. Teammates: start here (15 minutes)
 1. Clone: `git clone https://github.com/yokshith09/AgentArena.git` (needs collaborator access, OQ-09).
-2. Read in order: this file → [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §1–3 → your role's docs ([docs/README.md](docs/README.md)) → your tasks in [docs/14-task-board.md](docs/14-task-board.md).
-3. **Answer the open questions** in [docs/15-open-questions.md](docs/15-open-questions.md): fill the *Answer / Date / By* cells you know (blocking first: OQ-05, OQ-08, OQ-09, OQ-12, OQ-13). Unanswered ones fall back to their stated default.
-4. **Acknowledge the contracts (X1):** read [07](docs/07-data-schema.md), [08](docs/08-api-contracts.md), [10](docs/10-integration-contracts.md); add your name to the changelog in doc 10, or open a `contract/X1-...` PR with objections.
+2. Read in order: this file → [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §1–3 → your role's docs ([docs/README.md](../README.md)) → your tasks in [docs/14-task-board.md](14-task-board.md).
+3. **Answer the open questions** in [docs/15-open-questions.md](15-open-questions.md): fill the *Answer / Date / By* cells you know (blocking first: OQ-05, OQ-08, OQ-09, OQ-12, OQ-13). Unanswered ones fall back to their stated default.
+4. **Acknowledge the contracts (X1):** read [07](07-data-schema.md), [08](08-api-contracts.md), [10](10-integration-contracts.md); add your name to the changelog in doc 10, or open a `contract/X1-...` PR with objections.
 5. Tell the team which role you take (OQ-04) and your hours for 12–15 Nov.
 Commit docs changes on a branch `docs/<topic>` and open a PR, or commit straight to `main` for answer cells only.
 
@@ -27,7 +27,7 @@ Three developers, assigned by component boundary so each can integrate independe
 | Dev-B | Execution: task format/validator, grader, runner, Docker sandbox, orchestrator, instruction fault, tasks, registry | B1, B2, B3, B5, B6, B12, B4, B8, X3, X6, (A8 P1) | 42.0 (+8) |
 | Dev-C | Experience: dashboard + mocks, agents A/B/C, tool-fault hook, docs/demo | C1–C5, C7, C8, C10, X4, X8, X10, X11, (C9 P1) | 42.5 (+2) |
 
-\*Midpoint estimates (board). Names → roles: A=__, B=__, C=__ (OQ-04). Reviewer ring: A→B→C→A; fallbacks: [docs/11](docs/11-team-execution-plan.md) §3.
+\*Midpoint estimates (board). Names → roles: A=__, B=__, C=__ (OQ-04). Reviewer ring: A→B→C→A; fallbacks: [docs/11](11-team-execution-plan.md) §3.
 
 ## 3. Dependency graph (what must finish first)
 
@@ -63,11 +63,11 @@ Lifecycle used (generic SDLC; no specific framework document was supplied): **Pl
 | Branch names | `feat/<ID>-slug`, `fix/<ID>-slug`, `contract/<ID>-slug`, `docs/<ID>-slug`, `chore/<ID>-slug` (e.g. `feat/A4-proxy-streaming`). One task = one branch where possible. |
 | Base | `main` is always runnable (compose starts, mocks work). No direct pushes after X2. |
 | PR | Title `[ID] summary`; body: task ID, acceptance criteria checked, tests run + result, contract impact (none/additive/breaking). Keep PRs ≤ ~1 day of work; merge at least every ~3 h of work. Squash merge. |
-| Review | Reviewer per ring ([docs/11](docs/11-team-execution-plan.md) §3). `contract` PRs need both other devs ([docs/10](docs/10-integration-contracts.md) §6). If the reviewer is blocked > 1 h, self-merge with passing checks and log it in the PR. |
+| Review | Reviewer per ring ([docs/11](11-team-execution-plan.md) §3). `contract` PRs need both other devs ([docs/10](10-integration-contracts.md) §6). If the reviewer is blocked > 1 h, self-merge with passing checks and log it in the PR. |
 | Merge checks | (1) owner's tests for the task pass; (2) T-16/T-30 fixture consistency still pass once they exist; (3) no secrets (`.env` ignored, scan); (4) docs/fixtures updated if a contract changed; (5) task status updated on the board. Automated CI is not assumed; checks run locally and are listed in the PR. |
-| Definition of Done (every task) | Acceptance criteria met; listed tests pass and result recorded in [docs/09](docs/09-testing-and-demo.md); merged to `main`; board status = Done; mock/fixture updated if the output shape is consumed by someone else. |
+| Definition of Done (every task) | Acceptance criteria met; listed tests pass and result recorded in [docs/09](09-testing-and-demo.md); merged to `main`; board status = Done; mock/fixture updated if the output shape is consumed by someone else. |
 | Integration cadence | Daily start sync (15 min): board + blockers. Merge-to-main frequently. Each milestone ends with an integration task on the real compose stack (X3, X5, X6). Last hour of each day = integration/fix slot. CP gates: [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) §3. |
-| Decisions | Go into [docs/01](docs/01-hackathon-strategy.md) (D/P/A/OQ), never only chat. |
+| Decisions | Go into [docs/01](01-hackathon-strategy.md) (D/P/A/OQ), never only chat. |
 
 ## 5. Timeboxes (re-baselined 2026-11-12)
 
@@ -94,18 +94,18 @@ CP0 was previously 11 Nov EOD; it is now folded into 12 Nov AM because nothing w
 | Framework agent B won't take a base URL (R-3) | C4 not working by CP1 + 0.5 d | Choose another framework; last resort relabelled second plain variant (disclosed) |
 | Tool faults only work on reference agents (R-6) | — | Documented limit |
 | Contract drift | T-16/T-30 fail | Block merge; §4 contract protocol |
-| Overload on one dev (B M2/M3 peak) | Task > 25% late | Fallback owners ([docs/11](docs/11-team-execution-plan.md) §3); A has slack in M4, C in M1 start |
+| Overload on one dev (B M2/M3 peak) | Task > 25% late | Fallback owners ([docs/11](11-team-execution-plan.md) §3); A has slack in M4, C in M1 start |
 | Windows/Linux differences (A-06) | Test fails on one OS | Fix in runner; containers as reference |
 | Flaky results | Wide intervals | Show them; do not hide (design intent) |
 
 ## 7. Scope-cut rules
-Authoritative: [docs/12](docs/12-delivery-plan.md) §4 (cut order 14 → 13 → 12 extras → 11 → Stage 9 → Stage 8 extras → Docker hardening → benchmark size). Trigger = a gate missed by > half a day or a task > 25% over estimate with no relief. Never cut: Stages 0–7, ≥ 4 faults with resilience score, Stage 15, interval/n/INFRA visibility, MOCK ribbon, three reference agents.
+Authoritative: [docs/12](12-delivery-plan.md) §4 (cut order 14 → 13 → 12 extras → 11 → Stage 9 → Stage 8 extras → Docker hardening → benchmark size). Trigger = a gate missed by > half a day or a task > 25% over estimate with no relief. Never cut: Stages 0–7, ≥ 4 faults with resilience score, Stage 15, interval/n/INFRA visibility, MOCK ribbon, three reference agents.
 
 ## 8. Demo-critical path
 V-01 → proxy events (T-01) → runner + grader (T-07/T-08) → X3 → orchestrator (T-13) → stats/API (T-15/T-16) → live leaderboard + trace (T-18) → faults + resilience (T-20/T-21) → X6 final benchmark → X7 freeze → C10 docs → X10 rehearsal. Everything else is optional for the demo.
 
 ## 9. Presentation
-Out of scope. [docs/PPT_FRAMEWORK.md](docs/PPT_FRAMEWORK.md) remains an untouched placeholder.
+Out of scope. [docs/PPT_FRAMEWORK.md](PPT_FRAMEWORK.md) remains an untouched placeholder.
 
 ## 10. Status log
 | Date | Gate | Note |

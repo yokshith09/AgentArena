@@ -183,7 +183,7 @@ Verified against the Bifrost README and docs (not by running it). Items marked *
 - **Why:** blocks X2.
 - **Facts:** remote given: `https://github.com/yokshith09/AgentArena.git`.
 - **Please confirm:** all three have push access (collaborator invites sent?); branch protection on/off; squash merge OK; who merges `contract` PRs; any naming constraint.
-- **Default:** collaborators with write access, no protection, squash merge, rules in [HACKATHON_PLAN.md](../HACKATHON_PLAN.md) §4.
+- **Default:** collaborators with write access, no protection, squash merge, rules in [HACKATHON_PLAN.md](HACKATHON_PLAN.md) §4.
 
 **Answer (2026-11-12):**
 - **Answer (rules):** the repo `https://github.com/yokshith09/AgentArena.git` belongs to Yokshith, so **Yokshith must invite Akhil and the third member as collaborators with write access**. No branch protection, squash merge, rules as in HACKATHON_PLAN.md §4. **A `contract` PR is reviewed and merged by someone other than its author.**
