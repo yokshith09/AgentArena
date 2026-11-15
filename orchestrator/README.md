@@ -35,10 +35,10 @@ exists, `python -m orchestrator.seed --trust` loads them unvalidated (developmen
 3. Runs them with bounded parallelism. Per run: `state='running'` **before** the agent starts (the
    proxy 404s otherwise) → `agent_started` event → (runner/agent_env fault: `fault_injected` event,
    fault passed in `RunSpec.fault`) → `run_agent(spec)` → `grade(task_dir, workspace_dir)` →
-   `grader_result` event → workspace deleted → wait `settle_s` (1.5 s) for proxy writes →
+   `grader_result` event → `runner.run.cleanup(result)` → wait `settle_s` (1.5 s) for proxy writes →
    metrics from events → classification → row `done`.
 4. **Classification** (F-06 step 5): INFRA_ERROR if the runner reports `sandbox_error` or raises,
-   the grader returns `error` or raises, or a real upstream failure (`error='upstream'`) is not
+   the grader raises, or a real upstream failure (`error='upstream'`) is not
    followed by a successful call. Otherwise FAIL on timeout, tamper, failing tests, or non-zero
    exit with no diff; else PASS. Injected faults (`error='injected'`) never cause INFRA_ERROR.
 5. INFRA_ERROR → new attempt; after attempt 3 the slot is `excluded`.
@@ -50,8 +50,11 @@ exists, `python -m orchestrator.seed --trust` loads them unvalidated (developmen
 - **Restart:** a run left `running` by a dead orchestrator is marked INFRA_ERROR ("orchestrator
   restarted") and gets a new attempt, instead of being reset to `queued` (F-06 step 8 wording). Its
   real spend and partial trace are kept; reusing the run_id would mix two traces.
-- **Workspace release:** the orchestrator deletes `RunResult.workspace_dir` after grading.
-- **Grader failure as a Python call:** `GradeResult.error` non-null (or an exception) = INFRA_ERROR.
+- **Workspace release:** after grading the orchestrator calls `runner.run.cleanup(result)` (deletes the
+  run's whole temp dir); without it, it deletes `RunResult.workspace_dir`.
+- **Grader failures:** the grader *raising* (e.g. `GraderInfraError`, CLI exit 2) = INFRA_ERROR.
+  `GradeResult.error` holds agent-caused test problems (suite timed out, collected no tests): FAIL,
+  with the message kept in `runs.error`.
 - **Runner/agent_env faults:** the orchestrator writes their `fault_injected` event when it hands the
   fault to the runner; the proxy writes the proxy-layer ones.
 - Runner and grader may return dataclasses (`orchestrator/types.py`), other objects or plain dicts.

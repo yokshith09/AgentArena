@@ -100,7 +100,11 @@ def aggregate(events: list[dict]) -> Metrics:
 
 
 def classify(result: Any, grade: Any, grade_error: str | None, metrics: Metrics) -> Outcome:
-    """F-06 step 5 (D-03). Injected faults never make INFRA_ERROR: only error='upstream' counts."""
+    """F-06 step 5 (D-03). Injected faults never make INFRA_ERROR: only error='upstream' counts.
+
+    `grade_error` is a grader *infrastructure* failure: the grader raised (GraderInfraError, CLI
+    exit 2). `GradeResult.error` is different: test-level problems the agent caused (a suite timed
+    out or collected no tests); those are FAIL, with the message kept on the run."""
     sandbox_error = get(result, "sandbox_error") if result is not None else "runner returned nothing"
     if sandbox_error:
         return Outcome("INFRA_ERROR", f"runner: {sandbox_error}")
@@ -114,7 +118,10 @@ def classify(result: Any, grade: Any, grade_error: str | None, metrics: Metrics)
         return Outcome("FAIL", "tamper detected: protected files were modified")
     if get(result, "exit_code") not in (0, None) and not (get(result, "diff") or "").strip():
         return Outcome("FAIL", f"agent exited {get(result, 'exit_code')} without changing the workspace")
-    return Outcome("PASS") if get(grade, "passed") else Outcome("FAIL", get(grade, "summary") or "tests failed")
+    if get(grade, "passed"):
+        return Outcome("PASS")
+    detail = "; ".join(x for x in (get(grade, "summary"), get(grade, "error")) if x)
+    return Outcome("FAIL", detail or "tests failed")
 
 
 def _seconds(start: Any, end: Any) -> float | None:
@@ -129,10 +136,11 @@ def _seconds(start: Any, end: Any) -> float | None:
 # ---- orchestrator ---------------------------------------------------------------------------
 class Orchestrator:
     def __init__(self, config: Config, run_agent: Callable[[RunSpec], Any],
-                 grade: Callable[[str, str], Any]):
+                 grade: Callable[[str, str], Any], cleanup: Callable[[Any], None] | None = None):
         self.cfg = config
         self.run_agent = run_agent
         self.grade = grade
+        self.cleanup = cleanup  # runner.run.cleanup: deletes the run's whole temp dir
         self._stop = threading.Event()
         self.faults = self._load_faults()
         self.pricing_version = str((yaml.safe_load(config.pricing_file.read_text(encoding="utf8"))
@@ -323,16 +331,13 @@ class Orchestrator:
         if not get(result, "sandbox_error") and get(result, "workspace_dir"):
             try:
                 grade = self.grade(str(task_dir), str(get(result, "workspace_dir")))
-                grade_error = get(grade, "error")
-            except Exception as e:  # noqa: BLE001 - grader crash is an infrastructure error
+            except Exception as e:  # noqa: BLE001 - grader raised = infrastructure failure (exit 2)
                 grade_error = f"{type(e).__name__}: {e}"
         if grade is not None:
             with self.connect() as c:
                 self._event(c, rid, "grader_result", {"passed": bool(get(grade, "passed")),
                                                       "suite_count": len(get(grade, "suites") or [])})
-        ws = get(result, "workspace_dir")
-        if ws:
-            shutil.rmtree(ws, ignore_errors=True)  # orchestrator releases the workspace (doc 10 2.1)
+        self._release(result)
 
         if self.cfg.settle_s:
             time.sleep(self.cfg.settle_s)  # let the proxy finish writing in-flight events
@@ -358,6 +363,18 @@ class Orchestrator:
                  run["repeat_index"], run["attempt"], outcome.status,
                  f" ({outcome.error})" if outcome.error else "")
         return outcome
+
+    def _release(self, result: Any) -> None:
+        """After grading (doc 10 2.1): the runner's cleanup() if given, else delete workspace_dir."""
+        if self.cleanup is not None and not isinstance(result, dict):
+            try:
+                self.cleanup(result)
+                return
+            except Exception:  # fall back to deleting the workspace ourselves
+                log.warning("runner cleanup failed; deleting the workspace directly", exc_info=True)
+        ws = get(result, "workspace_dir")
+        if ws:
+            shutil.rmtree(ws, ignore_errors=True)
 
     def _retry(self, c, run: dict) -> None:
         if run["attempt"] >= MAX_ATTEMPTS:

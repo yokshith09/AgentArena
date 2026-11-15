@@ -73,6 +73,9 @@ FAIL_GRADE = GradeResult(passed=False, tamper_detected=False, summary="2 tests f
     (RunResult(1, False, "/w", diff=""), PASS_GRADE, None, Metrics(), "FAIL", "without changing"),
     (RunResult(1, False, "/w", diff="+x"), PASS_GRADE, None, Metrics(), "PASS", None),
     (OK_RUN, FAIL_GRADE, None, Metrics(), "FAIL", "2 tests failed"),
+    # GradeResult.error = agent-caused test problem (exec-core grader): FAIL, not INFRA
+    (OK_RUN, {"passed": False, "tamper_detected": False, "summary": "visible failed",
+              "error": "hidden suite collected no tests"}, None, Metrics(), "FAIL", "collected no tests"),
     (OK_RUN, PASS_GRADE, None, Metrics(), "PASS", None),
     ({"exit_code": 0, "timed_out": False, "workspace_dir": "/w", "diff": "+x"},
      {"passed": True, "tamper_detected": False}, None, Metrics(), "PASS", None),   # plain dicts work
@@ -224,10 +227,10 @@ class Fake:
                            suites=[SuiteResult("visible", True, 3, 0), SuiteResult("hidden", True, 2, 0)])
 
 
-def orch(world, fake, parallel=2):
+def orch(world, fake, parallel=2, cleanup=None):
     return Orchestrator(Config(dsn=world["dsn"], proxy_base_url="http://proxy.test:8001", parallel=parallel,
                                settle_s=0, faults_dir=world["faults"], pricing_file=ROOT / "pricing.yaml",
-                               root=world["root"]), fake.run_agent, fake.grade)
+                               root=world["root"]), fake.run_agent, fake.grade, cleanup)
 
 
 def launch(dsn, **cfg):
@@ -365,3 +368,12 @@ def test_agent_env_fault_passed_to_runner_and_logged(world):
              " WHERE r.benchmark_id=%s AND e.type='fault_injected'", bid)
     assert [(s, p["fault_id"], p["group"]) for s, p in rows] == [
         ("tool_run_tests_error", "tool_run_tests_error", "tool")]
+
+
+@needs_db
+def test_runner_cleanup_is_used_when_given(world):
+    fake, released = Fake(world["dsn"], {"a1": {}}), []
+    launch(world["dsn"], n_runs=2)
+    orch(world, fake, cleanup=lambda result: released.append(result.workspace_dir)).run_once()
+    assert sorted(released) == sorted(fake.workspaces)
+    assert all(Path(w).exists() for w in fake.workspaces)   # our own rmtree was not used
