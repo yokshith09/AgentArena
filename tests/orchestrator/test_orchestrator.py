@@ -112,7 +112,8 @@ def test_seed_reads_repo_agents():
     assert all(a["source_path"].startswith("agents/") for a in agents)
 
 
-def test_seed_requires_validator_or_trust(tmp_path):
+def test_seed_requires_validator_or_trust(tmp_path, monkeypatch):
+    monkeypatch.setattr(seed, "_validator", lambda: None)       # as before grader/validate.py existed
     make_task(tmp_path, "t1")
     with pytest.raises(RuntimeError, match="--trust"):
         seed.read_tasks(tmp_path)
@@ -167,8 +168,10 @@ def db():
 
 
 @pytest.fixture
-def world(db, tmp_path):
-    """Agents a1/a2/a3, tasks t1/t2 (t1 allows both test faults), faults dir, loaded via seed.load."""
+def world(db, tmp_path, monkeypatch):
+    """Agents a1/a2/a3, tasks t1/t2 (t1 allows both test faults), faults dir, loaded via seed.load.
+    The fake tasks have no tests, so the real validator is switched off for them."""
+    monkeypatch.setattr(seed, "_validator", lambda: None)
     agents_dir, tasks_dir, faults = tmp_path / "agents", tmp_path / "tasks", tmp_path / "faults"
     for a in ("a1", "a2", "a3"):
         make_agent(agents_dir, a)
