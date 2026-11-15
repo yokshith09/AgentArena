@@ -26,7 +26,7 @@ Pri = priority of the feature tested. Result column is the only place status is 
 | T-09 | Runner | Spawn failure → `sandbox_error`; works on each dev OS (A-06); non-proxy network call blocked + logged in the Docker sandbox | B | P0 | not run |
 | T-10 | Grader | Hidden tests run from clean copy; hidden tests absent from agent workspace | B | P0 | not run |
 | T-11 | AG | Each reference agent completes a scripted task against `mock_llm` | C | P0 | pass on mock_llm (tests in agents/, now collected by pytest); retry behaviour covered by agents/agent_a/test_agent_a_retry.py |
-| T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | partial 2026-11-15: Agent A ran fix-off-by-one via proxy→Bifrost→Groq, $0.000422 recorded (X3); Agents B and C not yet run on Groq |
+| T-12 | AG | Each reference agent attempts ≥ 1 real task via proxy→Bifrost (cost recorded) | C | P0 | pass 2026-11-15: all three agents ran all 5 tasks via proxy→Bifrost→Groq in X6 (costs recorded, verified) |
 | T-13 | OR | Outcome classification table (PASS / FAIL / INFRA_ERROR; injected faults never INFRA) — unit | A (was B) | P0 | pass 2026-11-15 (`tests/orchestrator`: classification table, upstream-vs-injected rule, full matrix on a throwaway DB) |
 | T-14 | OR | Kill mid-benchmark → resume completes without redoing `done` slots; spend cap halts scheduling | A (was B) | P0 | pass 2026-11-15 (`tests/orchestrator`: restart recovery, done slots not re-run, cap 0.025 halts after 3 × 0.01) |
 | T-15 | Stats | Wilson, bootstrap (fixed seed), median/std, edge cases (n=0,1, all pass) vs hand-computed goldens | A | P0 | pass 2026-11-14 (`tests/stats`, 12 tests, branch `feat/A5-stats-api`) |
