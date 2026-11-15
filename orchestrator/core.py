@@ -51,6 +51,7 @@ class Config:
     timeout_s: int = 300
     settle_s: float = 1.5     # wait for in-flight proxy event writes (docs/10 section 2.5: <= 2 s)
     poll_s: float = 2.0
+    min_interval_s: float = 0.0  # minimum seconds between run starts (provider tokens/minute limits)
     faults_dir: Path = ROOT / "faults"
     pricing_file: Path = ROOT / "pricing.yaml"
     root: Path = ROOT          # task_dir / source_path in the DB are relative to this
@@ -142,6 +143,7 @@ class Orchestrator:
         self.grade = grade
         self.cleanup = cleanup  # runner.run.cleanup: deletes the run's whole temp dir
         self._stop = threading.Event()
+        self._last_start = 0.0
         self.faults = self._load_faults()
         self.pricing_version = str((yaml.safe_load(config.pricing_file.read_text(encoding="utf8"))
                                     or {}).get("version")) if config.pricing_file.exists() else None
@@ -227,6 +229,8 @@ class Orchestrator:
                     halted = True
                     log.warning("benchmark %s: spend cap $%.4f reached; no new runs", bid, cap)
                 while not halted and len(in_flight) < self.cfg.parallel:
+                    if self._pace():
+                        break  # stop requested while waiting
                     run = self._claim_run(bid)
                     if run is None:
                         break
@@ -244,6 +248,14 @@ class Orchestrator:
             self._finish(c, bid, state, None)
         log.info("benchmark %s: %s (spend $%.6f)", bid, state, self._spend(bid))
         return state
+
+    def _pace(self) -> bool:
+        """Wait until min_interval_s has passed since the last run start. True if stopped meanwhile."""
+        wait_s = self._last_start + self.cfg.min_interval_s - time.monotonic()
+        if wait_s > 0 and self._stop.wait(wait_s):
+            return True
+        self._last_start = time.monotonic()
+        return False
 
     def _check_config(self, c, cfg: dict) -> str | None:
         for key in ("agent_ids", "task_ids", "n_runs"):

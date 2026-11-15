@@ -380,3 +380,19 @@ def test_runner_cleanup_is_used_when_given(world):
     orch(world, fake, cleanup=lambda result: released.append(result.workspace_dir)).run_once()
     assert sorted(released) == sorted(fake.workspaces)
     assert all(Path(w).exists() for w in fake.workspaces)   # our own rmtree was not used
+
+
+@needs_db
+def test_min_interval_spaces_run_starts(world):
+    import itertools
+    import time as _t
+    starts = []
+    fake = Fake(world["dsn"], {"a1": {}})
+    original = fake.run_agent
+    fake.run_agent = lambda spec: (starts.append(_t.monotonic()), original(spec))[1]
+    launch(world["dsn"], n_runs=3)
+    o = orch(world, fake, parallel=2)
+    o.cfg.min_interval_s = 0.4
+    o.run_once()
+    gaps = [b - a for a, b in itertools.pairwise(starts)]
+    assert len(starts) == 3 and all(g >= 0.35 for g in gaps), gaps

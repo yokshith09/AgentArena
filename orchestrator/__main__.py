@@ -36,12 +36,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--proxy", default=os.environ.get("PROXY_BASE_URL", "http://localhost:8001"))
     ap.add_argument("--timeout", type=int, default=int(os.environ.get("RUN_TIMEOUT_S", "300")))
     ap.add_argument("--poll", type=float, default=2.0)
+    ap.add_argument("--min-interval", type=float, default=float(os.environ.get("ORCH_MIN_INTERVAL_S", "0")),
+                    help="minimum seconds between run starts (e.g. 35 for Groq free tier, 8K tokens/min)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"),
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     run_agent, grade, cleanup = load_callables(args.stub)
     orch = Orchestrator(Config(dsn=os.environ.get("DATABASE_URL", ""), proxy_base_url=args.proxy,
-                               parallel=max(1, args.parallel), timeout_s=args.timeout, poll_s=args.poll),
+                               parallel=max(1, args.parallel), timeout_s=args.timeout, poll_s=args.poll,
+                               min_interval_s=max(0.0, args.min_interval)),
                         run_agent, grade, cleanup)
     signal.signal(signal.SIGINT, lambda *_: orch.stop())
     if args.once:

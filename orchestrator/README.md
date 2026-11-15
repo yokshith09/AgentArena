@@ -23,6 +23,7 @@ python -m orchestrator                        # poll for queued benchmarks (Ctrl
 | `--parallel N` / `ORCH_PARALLEL` | 2 | runs at once (watch provider rate limits) |
 | `--proxy URL` / `PROXY_BASE_URL` | `http://localhost:8001` | given to the runner as `proxy_base_url` |
 | `--timeout S` / `RUN_TIMEOUT_S` | 300 | agent wall-clock limit passed to the runner |
+| `--min-interval S` / `ORCH_MIN_INTERVAL_S` | 0 | minimum seconds between run starts; ~35 for Groq's free tier (8K tokens/min, ~4K tokens per run) |
 
 Seed loader: tasks load **only if** `grader.validate.validate(task_dir)` says ok. Until the validator
 exists, `python -m orchestrator.seed --trust` loads them unvalidated (development only, warned).
