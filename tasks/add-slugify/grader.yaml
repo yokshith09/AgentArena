@@ -1,0 +1,6 @@
+type: pytest
+config:
+  visible_tests: [tests/]
+  hidden_tests: [hidden_tests/]
+  protected_files: [tests/]
+  timeout_s: 60
