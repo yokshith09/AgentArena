@@ -1405,7 +1405,7 @@ function RunList({
       {runs.length ? (
         <div className="run-list">
           {runs.map((run) => (
-            <a className="run-row" key={run.run_id} href={`/runs/${run.run_id}`}>
+            <a className="run-row" key={run.run_id} href={keepMode(`/runs/${run.run_id}`)}>
               <span>
                 <strong>{agents.find(({ agent_id }) => agent_id === run.agent_id)?.name ?? run.agent_id}</strong>
                 <span className="cell-detail">{run.task_id} · {run.scenario}</span>

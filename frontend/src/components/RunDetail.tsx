@@ -6,6 +6,12 @@ import type { Event, GradeResult, RunDetail as RunRecord } from '../types'
 const tabs = ['Timeline', 'Diff', 'Grader', 'Environment'] as const
 type RunTab = (typeof tabs)[number]
 
+// Run links keep ?mode=live; without it the next page silently falls back to mock data.
+function runHref(runId: string) {
+  const mode = new URLSearchParams(window.location.search).get('mode')
+  return `/runs/${runId}${mode ? `?mode=${encodeURIComponent(mode)}` : ''}`
+}
+
 export default function RunDetailPage({
   fixture,
   fixtureState,
@@ -72,13 +78,13 @@ export default function RunDetailPage({
       {cellRuns.length > 1 && (
         <nav className="run-neighbors" aria-label="Runs in this agent, task, and scenario">
           {runIndex > 0 ? (
-            <a className="button button-secondary" href={`/runs/${cellRuns[runIndex - 1].run_id}`}>
+            <a className="button button-secondary" href={runHref(cellRuns[runIndex - 1].run_id)}>
               Previous run
             </a>
           ) : <span aria-disabled="true">Previous run</span>}
           <span>Run {run.repeat_index} of {cellRuns.length}</span>
           {runIndex < cellRuns.length - 1 ? (
-            <a className="button button-secondary" href={`/runs/${cellRuns[runIndex + 1].run_id}`}>
+            <a className="button button-secondary" href={runHref(cellRuns[runIndex + 1].run_id)}>
               Next run
             </a>
           ) : <span aria-disabled="true">Next run</span>}

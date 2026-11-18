@@ -60,7 +60,7 @@ export default function Landing() {
           </div>
           <HeroChart />
           <dl className="lp-stats lp-reveal">
-            <div><dt>Real runs</dt><dd>33</dd></div>
+            <div><dt>Real runs</dt><dd>30</dd></div>
             <div><dt>Infra errors</dt><dd>0</dd></div>
             <div><dt>Total spend</dt><dd>$0.011</dd></div>
             <div><dt>Proxy overhead</dt><dd>+17 ms</dd></div>
@@ -178,7 +178,7 @@ export default function Landing() {
           <h2>See every run behind every number.</h2>
           <div className="lp-actions">
             <a className="lp-btn lp-btn-light" href={dashboardHref}>Open the dashboard</a>
-            <a className="lp-btn lp-btn-ghost" href="/benchmarks/new">Launch a benchmark</a>
+            <a className="lp-btn lp-btn-ghost" href="/benchmarks/new?mode=live">Launch a benchmark</a>
           </div>
         </section>
       </main>
