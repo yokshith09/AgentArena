@@ -327,8 +327,12 @@ function relativeSeconds(start: number, timestamp: string) {
   return Math.max(0, Math.round((current - start) / 1000)).toString()
 }
 
+/** Two significant digits for sub-dollar amounts (a single run on a cheap model costs ~$0.0004). */
 function formatMoney(value: number | null) {
-  return value === null ? '—' : `$${value.toFixed(4)}`
+  if (value === null) return '—'
+  const abs = Math.abs(value)
+  const digits = abs === 0 || abs >= 1 ? 2 : Math.min(8, Math.max(2, 1 - Math.floor(Math.log10(abs))))
+  return `$${value.toFixed(digits)}`
 }
 
 function formatTimestamp(value: string | null) {

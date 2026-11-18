@@ -71,6 +71,16 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   return res.json() as Promise<T>
 }
 
+/** Benchmark shown when none is selected: the largest finished matrix (agents x tasks), so the
+ *  first view is the main leaderboard rather than whatever ran last; newest wins ties. Falls back to
+ *  the newest benchmark when nothing has finished. `benchmarks` arrives newest first. */
+export function pickDefaultBenchmark(benchmarks: Benchmark[]): Benchmark | null {
+  const finished = benchmarks.filter((b) => b.state === 'completed' || b.state === 'halted_spend_cap')
+  const size = (b: Benchmark) => (b.config?.agent_ids?.length ?? 0) * (b.config?.task_ids?.length ?? 0)
+  const best = finished.reduce<Benchmark | null>((top, b) => (top === null || size(b) > size(top) ? b : top), null)
+  return best ?? benchmarks[0] ?? null
+}
+
 export type LiveData = {
   fixture: DashboardFixture
   benchmarks: Benchmark[]
@@ -89,7 +99,7 @@ export async function loadLive(
     get<Page<Scenario>>('/api/scenarios?limit=200', signal),
   ])
   const benchmarks = benchmarkPage.items
-  const benchmark = benchmarks.find((b) => b.benchmark_id === benchmarkId) ?? benchmarks[0] ?? null
+  const benchmark = benchmarks.find((b) => b.benchmark_id === benchmarkId) ?? pickDefaultBenchmark(benchmarks)
 
   let results: ResultRow[] = []
   let compareResults: ResultRow[] = []
