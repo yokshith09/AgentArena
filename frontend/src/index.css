@@ -1,26 +1,33 @@
 :root {
   font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   color: #131416;
-  background: #f9fbfc;
+  background: #f4f6f8;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --ink: #131416;
-  --muted: #5d5f60;
-  --ground: #f9fbfc;
+  --ink: #0e1726;
+  --muted: #56627a;
+  --ground: #f5f7fa;
   --surface: #ffffff;
   --raised: #f4f6f8;
   --active: #ebedee;
   --border: #e8eaec;
   --rule: #f0f1f2;
   --control: #cdced1;
-  --accent: #1b6c80;
-  --positive: #1e7b4f;
+  --accent: #5b4fd9;
+  --positive: #0b8a7a;
   --negative: #c4242a;
   --warning: #70400a;
   --mono: 'IBM Plex Mono', Consolas, monospace;
+  --accent-hover: #4a3fc0;
+  --accent-soft: #efedfd;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow: 0 1px 3px rgb(16 24 40 / 0.06), 0 4px 12px rgb(16 24 40 / 0.04);
 
   font-optical-sizing: auto;
 }
