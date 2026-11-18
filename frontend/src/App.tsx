@@ -7,6 +7,7 @@ import {
   type FixtureState,
 } from './mocks/fixtures'
 import { ApiFailure, createBenchmark, loadLive, type LiveData } from './api/live'
+import CommandPalette, { type QuickAction } from './components/CommandPalette'
 import FixtureNotice from './components/FixtureNotice'
 import RunDetailPage from './components/RunDetail'
 import type { Benchmark, ResultRow, RunDetail, Scenario } from './types'
@@ -23,13 +24,20 @@ const stateOptions: Array<{ value: FixtureState; label: string }> = [
   { value: 'error', label: 'Error' },
 ]
 
-const navigation = [
-  { label: 'Leaderboard', href: '/' },
-  { label: 'Benchmarks', href: '/benchmarks' },
-  { label: 'Compare', href: '/compare' },
-  { label: 'Failure scenarios', href: '/resilience' },
-  { label: 'Catalog', href: '/catalog' },
-  { label: 'Limitations', href: '/limitations' },
+// Grouped by the order a user works in: set up a benchmark, read results, then check the caveats.
+const navigationGroups: { label: string; items: { label: string; href: string; icon: IconName }[] }[] = [
+  { label: 'Set up', items: [
+    { label: 'Catalog', href: '/catalog', icon: 'catalog' },
+    { label: 'Benchmarks', href: '/benchmarks', icon: 'play' },
+  ] },
+  { label: 'Analyze', items: [
+    { label: 'Leaderboard', href: '/', icon: 'trophy' },
+    { label: 'Compare', href: '/compare', icon: 'compare' },
+    { label: 'Failure scenarios', href: '/resilience', icon: 'shield' },
+  ] },
+  { label: 'Reference', items: [
+    { label: 'Limitations', href: '/limitations', icon: 'info' },
+  ] },
 ]
 
 type Route =
@@ -168,40 +176,67 @@ function App() {
   const fixture = liveMode ? (live.data?.fixture ?? mockFixtures.empty) : mockFixtures[mockState]
   const fixtureState: FixtureState = liveMode ? live.state : mockState
   const [menuOpen, setMenuOpen] = useState(false)
+  const go = (href: string) => () => { window.location.href = href }
+  const quickActions: QuickAction[] = [
+    { id: 'new', group: 'Actions', label: 'New benchmark', hint: 'Launch', keywords: 'create queue run start', run: go(keepMode('/benchmarks/new')) },
+    { id: 'mode', group: 'Actions', label: liveMode ? 'Switch to mock data' : 'Switch to live data', hint: 'Mode', keywords: 'live mock api toggle', run: go(withQuery({ mode: liveMode ? null : 'live' })) },
+    ...navigationGroups.flatMap((g) => g.items.map((item) => ({
+      id: `nav-${item.href}`, group: 'Go to', label: item.label, hint: g.label, run: go(keepMode(item.href)),
+    }))),
+    ...(liveMode && live.data ? live.data.benchmarks : []).map((b) => ({
+      id: `bm-${b.benchmark_id}`, group: 'Open benchmark', label: b.name, keywords: 'benchmark results',
+      run: go(routeHref(['leaderboard', 'compare', 'resilience'].includes(route) ? window.location.pathname : '/', { benchmark: b.benchmark_id, mode: 'live' })),
+    })),
+  ]
 
   return (
-    <div className="app-frame">
-      <header className="app-header">
-        <a className="brand" href={keepMode('/')} aria-label="AgentArena home">
-          <span className="brand-mark" aria-hidden="true">A</span>
-          <span>AgentArena</span>
-        </a>
-        <button
-          className="menu-toggle"
-          type="button"
-          aria-expanded={menuOpen}
-          aria-controls="primary-navigation"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? 'Close menu' : 'Menu'}
-        </button>
+    <div className={`app-frame${liveMode ? " is-live-mode" : ""}`}>
+      <aside className="sidebar">
+        <div className="sidebar-top">
+          <a className="brand" href="/home" aria-label="AgentArena home">
+            <span className="brand-mark" aria-hidden="true">A</span>
+            <span>AgentArena</span>
+          </a>
+          <button
+            className="menu-toggle"
+            type="button"
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? 'Close menu' : 'Menu'}
+          </button>
+        </div>
         <nav
           id="primary-navigation"
           className={`primary-navigation${menuOpen ? ' is-open' : ''}`}
           aria-label="Primary navigation"
         >
-          {navigation.map((item) => (
-            <a
-              key={item.href}
-              href={keepMode(item.href)}
-              aria-current={item.href === '/' ? route === 'leaderboard' ? 'page' : undefined :
-                window.location.pathname === item.href ? 'page' : undefined}
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.label}
-            </a>
+          {navigationGroups.map((group) => (
+            <div className="nav-group" key={group.label}>
+              <h2 className="nav-group-label" id={`nav-${group.label.replace(' ', '-')}`}>{group.label}</h2>
+              <ul aria-labelledby={`nav-${group.label.replace(' ', '-')}`}>
+                {group.items.map((item) => (
+                  <li key={item.href}>
+                    <a
+                      href={keepMode(item.href)}
+                      aria-current={item.href === '/' ? route === 'leaderboard' ? 'page' : undefined :
+                        window.location.pathname === item.href ? 'page' : undefined}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <NavIcon name={item.icon} />
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </nav>
+      </aside>
+      <div className="app-main">
+      <header className="app-header">
+        <CommandPalette actions={quickActions} />
         <div className="header-controls">
           {['leaderboard', 'compare', 'resilience'].includes(route) && (
             <label className="select-control benchmark-select">
@@ -227,7 +262,7 @@ function App() {
             </label>
           )}
           {!liveMode && <label className="select-control fixture-select">
-            <span>Fixture state</span>
+            <span>Sample scenario</span>
             <select
               aria-label="Select mock fixture state"
               value={fixtureState}
@@ -240,17 +275,17 @@ function App() {
               ))}
             </select>
           </label>}
-          <a
-            className={`mode-switch${liveMode ? ' is-live' : ''}`}
-            href={withQuery({ mode: liveMode ? null : 'live' })}
-          >
-            {liveMode ? 'Live mode' : 'Mock mode'}
-          </a>
+          <div className="mode-toggle" role="group" aria-label="Data source">
+            <a href={withQuery({ mode: null })} aria-current={!liveMode ? 'true' : undefined} title="Illustrative sample data, safe to explore">Mock</a>
+            <a href={withQuery({ mode: 'live' })} aria-current={liveMode ? 'true' : undefined} className="is-live" title="Real results from the AgentArena API">
+              <i aria-hidden="true" />Live
+            </a>
+          </div>
         </div>
       </header>
 
       <div className="workspace">
-        <div className="mock-ribbon" role="status">
+        <div className={`mock-ribbon${liveMode && live.status === "error" ? " is-error" : ""}`} role="status">
           {liveMode
             ? live.status === 'error'
               ? 'LIVE API UNAVAILABLE'
@@ -273,6 +308,7 @@ function App() {
         <span>AgentArena</span>
         <span>Every metric links back to the runs behind it.</span>
       </footer>
+      </div>
     </div>
   )
 }
@@ -440,11 +476,14 @@ function Leaderboard({
         <EmptyState
           title="No benchmark results yet"
           message="Launch a benchmark to compare agents on the same tasks."
-          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>Launch a benchmark</a>}
+          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}><CtaContent label="Launch a benchmark" /></a>}
         />
       ) : (
         <>
           <BenchmarkSummary fixture={fixture} results={results} scenario={selectedScenario} />
+          <section className="panel" aria-labelledby="ranking-title">
+          <div className="panel-header">
+            <h2 id="ranking-title">Agent ranking</h2>
           <div className="section-toolbar">
             <div className="scenario-control">
               <label htmlFor="scenario">Scenario</label>
@@ -461,6 +500,7 @@ function Leaderboard({
               </select>
             </div>
             <span>{results.length} agents · generated {formatGenerated(fixture.generatedAt)}</span>
+          </div>
           </div>
           {selectedInScope.length > 1 && (
             <a className="button button-secondary compare-action" href={compareHref}>
@@ -552,10 +592,14 @@ function Leaderboard({
               )
             })}
           </div>
-          <p className="table-footnote">
-            Success intervals are Wilson 95% confidence intervals. INFRA_ERROR runs are excluded;
-            steps count LLM calls and tool calls count requested tools. <a href={keepMode('/limitations')}>Metric definitions</a>.
-          </p>
+          </section>
+          <details className="accordion">
+            <summary>How these metrics are calculated</summary>
+            <p className="table-footnote">
+              Success intervals are Wilson 95% confidence intervals. INFRA_ERROR runs are excluded;
+              steps count LLM calls and tool calls count requested tools. <a href={keepMode('/limitations')}>Metric definitions</a>.
+            </p>
+          </details>
         </>
       )}
     </>
@@ -689,14 +733,14 @@ function Benchmarks({
       <PageHeading
         title="Benchmarks"
         description="Track benchmark progress, spend, and the runs behind each result."
-        action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>New benchmark</a>}
+        action={<a className="button button-primary" href={keepMode('/benchmarks/new')}><CtaContent label="New benchmark" /></a>}
       />
       <FixtureNotice fixture={fixture} state={fixtureState} />
       {benchmarks.length === 0 ? (
         <EmptyState
           title="No benchmarks yet"
           message="Create a benchmark to run agents against a shared task set."
-          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}>Create benchmark</a>}
+          action={<a className="button button-primary" href={keepMode('/benchmarks/new')}><CtaContent label="Create benchmark" /></a>}
         />
       ) : (
         <div className="table-scroll" role="region" aria-label="Benchmarks" tabIndex={0}>
@@ -1025,7 +1069,7 @@ function NewBenchmark({
             <span>{liveMode ? 'Submitting queues a real benchmark that spends provider budget up to the cap.' : 'No benchmark will be queued by this preview.'}</span>
           </div>
           <button className="button button-primary" type="submit" disabled={submitting}>
-            {liveMode ? 'Queue benchmark' : 'Preview launch'}
+            <CtaContent label={liveMode ? 'Queue benchmark' : 'Preview launch'} />
           </button>
           {Object.keys(errors).length > 0 && (
             <p className="form-error-summary" role="alert">Correct the highlighted fields before previewing.</p>
@@ -1495,12 +1539,15 @@ function Resilience({
             : 'Select Fault injected from the fixture selector to inspect the provider 503 example.'}
         />
       )}
-      <p className="table-footnote">
-        Each cell links to the runs behind it. Tests cover the selected conditions, not all production failures.
-        {!liveMode && ' Results are illustrative mock data.'}
-      </p>
-      <section className="content-section">
-        <h2>Scenario definitions</h2>
+      <details className="accordion">
+        <summary>How to read this matrix</summary>
+        <p className="table-footnote">
+          Each cell links to the runs behind it. Tests cover the selected conditions, not all production failures.
+          {!liveMode && ' Results are illustrative mock data.'}
+        </p>
+      </details>
+      <details className="accordion">
+        <summary>Scenario definitions</summary>
         <div
           className="table-scroll"
           role="region"
@@ -1528,7 +1575,7 @@ function Resilience({
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
     </>
   )
 }
@@ -1742,3 +1789,39 @@ function formatStat(value: number | null) {
 }
 
 export default App
+
+/** Primary CTA content: hover swaps to an upbeat message (visual only; the accessible name stays `label`). */
+function CtaContent({ label }: { label: string }) {
+  return (
+    <span className="cta">
+      <svg className="cta-plane" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+        <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+      <span className="cta-text">
+        <span className="cta-default">{label}</span>
+        <span className="cta-hover" aria-hidden="true">Let&apos;s go, you&apos;re all set!</span>
+      </span>
+    </span>
+  )
+}
+
+type IconName = 'catalog' | 'play' | 'trophy' | 'compare' | 'shield' | 'info'
+
+const iconPaths: Record<IconName, string> = {
+  catalog: 'M4 5h16M4 12h16M4 19h10',
+  play: 'M7 4v16l13-8z',
+  trophy: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H4a3 3 0 0 0 4 4M16 6h4a3 3 0 0 1-4 4M12 13v4M8 20h8',
+  compare: 'M7 4v16M17 4v16M3 8h8M13 16h8',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5v.5',
+}
+
+function NavIcon({ name }: { name: IconName }) {
+  return (
+    <svg className="nav-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+      <path d={iconPaths[name]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** Headline tiles for the selected scenario: the four numbers a reviewer looks for first. */
